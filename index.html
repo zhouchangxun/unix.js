@@ -24,9 +24,9 @@ function termOpen(n) {
 				x: 0,
 				y: 0,
 				rows: 24,
-				greeting: '%+r +++ Terminal #'+n+' ready. +++ %-r %n  boot OS ....%n',
+				greeting: '%+r +++ Terminal ready. +++ %-r %n  boot OS ....%n',
 				id: n,
-				termDiv: 'termDiv'+n,
+				termDiv: 'termDiv',
 				crsrBlinkMode: true,
 				handler: termHandler,
 				exitHandler: termExitHandler,
@@ -136,9 +136,9 @@ a.termopen:active {
 
 
 <body bgcolor="#222222" link="#77dd11" text="#cccccc" alink="#dddddd" vlink="#77dd11" >
-<p align='center'>unix.js</p>
+<p align='center'>The JavaScript virtual OS</p>
 
-<div id="termDiv1" class="center_tty" </div>
+<div id="termDiv" class="center_tty" </div>
 
 </body>
 <script > termOpen(1)</script>

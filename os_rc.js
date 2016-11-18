@@ -12,7 +12,7 @@ vfsForceFile('/etc/profile', 'f', [
 'alias -s bla \'echo "Vergil, Aeneis:" | more /var/testfile\'',
 'stty -blink',
 'write "                           %+r     Terminal ready.     %-r"',
-'echo " $VERSION - The JavaScript virtual OS and terminal application for the web."',
+'echo " $VERSION - The JavaScript virtual OS for the web."',
 'echo " Type \\"info\\" for site information. Type \\"help\\" for available commands."',
 'echo " ------------------------------------------------------------------------------"'
 ], 0755);

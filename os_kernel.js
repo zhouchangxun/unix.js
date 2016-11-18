@@ -1,9 +1,9 @@
 
 //global var
-var conf_defaultmail='webmaster'+'@'+'masswerk.at';
-var conf_defaulturl='http://www.masswerk.at';
-var os_version='JS/UIX 0.49';
-var os_greeting=' '+os_version+' - The JavaScript virtual OS and terminal application for the web.';
+var conf_defaultmail='changxunzhou'+'@'+'qq.com';
+var conf_defaulturl='https://github.com/zhouchangxun';
+var os_version='unix.js 1.0.0-beta';
+var os_greeting=' '+os_version+' - The JavaScript virtual OS for the web.';
 
 var manPages=new Array();
 var usrPATH=new Array();
@@ -24,7 +24,7 @@ var krnlUIDcnt=100;
 var krnlUIDs=new Array();
 var krnlGIDs=new Array();
 var conf_rootpassskey='7B56B841C38BF38C';
-var os_mdate=new Date(2003,10,05,12,0,0);
+var os_mdate=new Date(2016,11,11,12,0,0);
 
 var jsuix_hasExceptions = false;
 //util
@@ -552,33 +552,20 @@ function typeResult(ret){
     tty.cursorSet(tty.r,tty.conf.cols-16)
     tty.write('... '+ret+'%n')
 }
-function krnlInit() {
-    // wait for gui
-    console.log(tty)
-    if (!tty.closed) {
-        krnlPIDs = [];
-        tty.cursorSet(3,2)
-        tty.write('version: '+os_version+'%n%n');
-        //create init process.
-        tty.type('  starting up [init] ...');
-        krnlCurPcs = new KrnlProcess(['init']);
-        krnlCurPcs.id = 'init';
-        krnlUIDs[0] = 'root';
-        krnlGIDs[0] = 'system';
-        krnlGIDs[1] = 'wheel';
-        krnlGIDs[2] = 'users';
-        typeResult('ok')
-        //init file system.
-        tty.type('  bringing up the file-system ... ');
-        vfsInit();
-        typeResult('ok')
-
-        tty.type('  building vfs tree ... ');
-        vfsTreeSetup();
-        typeResult('ok')
-        //RC file
-        tty.type('  trying for RC-file ... ');
-        if (self.jsuixRC) {
+        
+//create init process.
+function fork_init(){
+  	krnlPIDs = [];
+    krnlCurPcs = new KrnlProcess(['init']);
+    krnlCurPcs.id = 'init';
+    krnlUIDs[0] = 'root';
+    krnlGIDs[0] = 'system';
+    krnlGIDs[1] = 'wheel';
+    krnlGIDs[2] = 'users';
+    typeResult('ok')
+}
+        function setup_rc_file(){
+	        if (self.jsuixRC) {
             typeResult('found');
             if (self.jsuixRX)  {
                 tty.type('  rc-profile looks good.');
@@ -590,28 +577,44 @@ function krnlInit() {
                 tty.type('# system may hang, trying further ...');
                 tty.newLine()
             }
-            ;
+            
             tty.type('  initializing rc-profile ... ');
             jsuixRC();
             typeResult('ok')
-        }
-        else {
-            typeResult('not found');
-        }
-        ;
-        tty.type('  command-system init... ');
-        commandInit();
-        typeResult('ok')
+	        }
+	        else {
+	            typeResult('not found');
+	        }
+      	}
+      	
+function krnlInit() {
+    // wait for gui
+    console.log(tty)
+    
+    var i=0;
+    function next(){
+    	return (i+=369);
+    }
+    if (!tty.closed) {
+        
+        tty.cursorSet(3,2)
+        tty.write('version: '+os_version+'%n%n');     
+        tty.type('  starting up [init] ...');
 
-        tty.type('  setting up system variables ... ');
-        sysvarsInit();
-        typeResult('ok')
-
-        tty.type('  system up and stable. :)');
-        tty.newLine();
-
-        tty.write('  starting login-demon...%n');
-        krnlLogin()
+        setTimeout("fork_init(); tty.type('  bringing up the file-system ... ');", next());
+        //init file system.       
+        setTimeout("vfsInit();typeResult('ok');tty.type('  building vfs tree ... ');", next());
+        // build vfs tree.
+        setTimeout("vfsTreeSetup();typeResult('ok');tty.type('  trying for RC-file ... ');", next());
+        //RC file
+        setTimeout("setup_rc_file(); tty.type('  command-system init... ');", next())
+				//command init
+        setTimeout("commandInit(); typeResult('ok'); tty.type('  setting up system variables ... ');",next());
+        //env var init.
+        setTimeout("sysvarsInit();typeResult('ok'); tty.type('  system up and stable. :)');tty.write('%n%n  starting login-demon...%n');", next());
+				//fork login process.
+        setTimeout(" krnlLogin()", next());      
+        
     }else{
         console.log('please open tty before.')
     }
@@ -623,7 +626,7 @@ function krnlLogin(reenter) {
     if (reenter) {
         tty.clear();
         tty.cursorSet(3,2)
-        tty.write('versio  n: '+os_version+'%n%n');
+        tty.write('version: '+os_version+'%n%n');
         tty.write('re-login to system or type "exit" for shut down.%n');
     };
     krnlCurPcs=new KrnlProcess(['login']);
@@ -633,13 +636,13 @@ function krnlLogin(reenter) {
     krnlCurPcs.run(true)
 }
 function krnlLoginDmn(init) {
-    var login_prompt = 'Login: '
+	  var help='  type user-name (e.g. "guest") and hit <return>.%n';
+    var login_prompt = '%n Login: ';
     if(init) {
         //begin login(redirect 'stdin' to logind process)
         tty.oldhandler = tty.handler
         tty.handler = krnlLoginDmn;
-        tty.newLine();
-        tty.write('  type user-name (e.g. "guest") and hit <return>.%n');
+
         tty.write(login_prompt)
         return
     }
