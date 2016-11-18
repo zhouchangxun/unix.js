@@ -88,7 +88,7 @@ function commandHelp(env) {
 }
 
 function commandNews(env) {
-	cnslClear();
+	tty.clear()();
 	env.args=['news','/etc/news'];
 	commandMore(env)
 }
@@ -477,12 +477,12 @@ function commandSplitScreen(env) {
 		krnlFOut(env.stderr,'usage: '+args[0]+' on|off');
 		return
 	};
-	cnslClear();
+	tty.clear()();
 	if (split) {
 		cnslType('split mode on',1); newLine();
 		cnslTypeAt(conf_rows-2,0,'--------------------------------------------------------------------------------');
 		cnslTypeAt(conf_rows-1,0,'JS/UIX by mass:werk. type "splitmode off" or "clear" to return to normal mode.');
-		cnslMaxLines=conf_rows-2
+		tty.maxLines=conf_rows-2
 	}
 	else  {
 		krnlFOut(env.stdout,'split mode off',1)
@@ -490,7 +490,7 @@ function commandSplitScreen(env) {
 }
 
 function commandInfo(env) {
-	cnslClear();
+	tty.clear()();
 	krnlFOut(env.stdout,[
 		'%+r Site Information %-r',
 		'                                                                        kk',
@@ -1119,9 +1119,9 @@ function commandMore(env) {
 	else if (env.line<env.more.length) {
 		if (krnlTtyChar==32) {
 			var l1=env.line;
-			if ((env.line) || (env.more.length-(env.line+t_r)>=cnslMaxLines-2)) cnslClear();
+			if ((env.line) || (env.more.length-(env.line+tty.r)>=tty.maxLines-2)) tty.clear()();
 			var a=env.line;
-			var b=Math.min(a+cnslMaxLines-1,env.more.length);
+			var b=Math.min(a+tty.maxLines-1,env.more.length);
 			//for (env.line=a; env.line<b; env.line++) krnlFOut(null,env.more[env.line],1);
 			var buf=new Array();
 			for (env.line=a; env.line<b; env.line++) buf[buf.length]=env.more[env.line];
@@ -1136,9 +1136,9 @@ function commandMore(env) {
 		}
 		else if (krnlTtyChar==113) {
 			t_c=0;
-			term[t_r]=cnslGetRowArrray(conf_cols,0);
-			termStyle[t_r]=cnslGetRowArrray(conf_cols,0);
-			termDisplay(t_r)
+			term[tty.r]=cnslGetRowArrray(conf_cols,0);
+			termStyle[tty.r]=cnslGetRowArrray(conf_cols,0);
+			termDisplay(tty.r)
 		};
 	};
 	env.status='';
@@ -1172,21 +1172,21 @@ function commandStty(env) {
 				if (onoff) {
 					var rl=parseInt(env.args[2]);
 					if ((isNaN(rl)==false) && (rl<=conf_rows)) {
-						cnslClear();
-						cnslMaxLines=rl
+						tty.clear()();
+						tty.maxLines=rl
 					}
 				}
 				else {
-					cnslMaxLines=conf_rows;
-					cnslClear()
+					tty.maxLines=conf_rows;
+					tty.clear()()
 				}
 			}
 			else if ((opt=='sane') && (onoff)) {
-				cnslMaxLines=conf_rows;
+				tty.maxLines=conf_rows;
 				cnslBlinkmode=true;
 				cnslBlockmode=true;
 				cnslSmartmode=true;
-				cnslClear()
+				tty.clear()()
 			}
 			else if (((opt=='a') || (opt=='g')) && (!onoff)) {
 				var oa=new Array();
@@ -1194,7 +1194,7 @@ function commandStty(env) {
 				oa['blink']=(cnslBlinkmode)? 1:0;
 				oa['block']=(cnslBlockmode)? 1:0;
 				oa['smart']=(cnslSmartmode)? 1:0;
-				oa['rows']=cnslMaxLines;
+				oa['rows']=tty.maxLines;
 				var keys=new Array();
 				for (var k in oa) keys[keys.length]=k;
 				keys.sort();

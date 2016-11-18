@@ -33,7 +33,10 @@ function termOpen(n) {
 
 			}
 		);
-		if (tty) {tty.open();krnlInit();}
+		if (tty) {
+			tty.open();
+			krnlInit();
+		}
 	}
 	else if (tty.closed) {
 		tty.open();
