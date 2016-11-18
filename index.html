@@ -1,42 +1,28 @@
 <html>
 <head>
-	<title>Terminal Test</title>
-	<script language="JavaScript" type="text/javascript" src="termlib.js"></script>
-	<script language="JavaScript" type="text/javascript" src="os_rc.js"></script>
-	<script language="JavaScript" type="text/javascript" src="os_cmd.js"></script>
-	<script language="JavaScript" type="text/javascript" src="os_shell.js"></script>
-	<script language="JavaScript" type="text/javascript" src="os_kernel.js"></script>
+	<title>unix.js</title>
+	<script type="text/javascript" src="termlib.js"></script>
+	<script type="text/javascript" src="os_rc.js"></script>
+	<script type="text/javascript" src="os_cmd.js"></script>
+	<script type="text/javascript" src="os_shell.js"></script>
+	<script type="text/javascript" src="os_kernel.js"></script>
 
-<script language="JavaScript" type="text/javascript">
+<script type="text/javascript">
 <!--
 
 /*
-  (c) Norbert Landsteiner 2003-2005
-  mass:werk - media environments
-  <http://www.masswerk.at>
+	init code
 */
 
 var tty;
 
-var helpPage=[
-	'%CS%+r Terminal Help %-r%n',
-	'  This is just a tiny test for multiple terminals.',
-	'  use one of the following commands:',
-	'     clear .... clear the terminal',
-	'     exit ..... close the terminal (or <ESC>)',
-	'     id ....... show terminal\'s id',
-	'     help ..... show this help page',
-	'  other input will be echoed to the terminal.',
-	' '
-];
-
 function termOpen(n) {
-	console.log('open terminal...')
+	console.log('open tty...')
 	if (!tty) {
 		tty=new Terminal(
 			{
-				x: 220,
-				y: 70,
+				x: 0,
+				y: 0,
 				rows: 24,
 				greeting: '%+r +++ Terminal #'+n+' ready. +++ %-r %n  boot OS ....%n',
 				id: n,
@@ -91,9 +77,11 @@ function termExitHandler() {
 </script>
 
 <style type="text/css">
+	
+/* css注释：为了观察长宽尺寸，可以设置border=1 */
+.center_tty{ margin:0 auto; width:567px; height:369px; border:0px solid #F00}
 
 /* essential terminal styles */
-
 .term {
 	font-family: courier,fixed,swiss,sans-serif;
 	font-size: 12px;
@@ -106,7 +94,6 @@ function termExitHandler() {
 }
 
 /* other page styles */
-
 body,p,a,td {
 	font-family: courier,fixed,swiss,sans-serif;
 	font-size: 12px;
@@ -148,21 +135,10 @@ a.termopen:active {
 </head>
 
 
-<body bgcolor="#222222" link="#77dd11" text="#cccccc" alink="#dddddd" vlink="#77dd11"
-topmargin="0" bottommargin="0" leftmargin="0" rightmargin="0" marginheight="0" marginwidth="0">
+<body bgcolor="#222222" link="#77dd11" text="#cccccc" alink="#dddddd" vlink="#77dd11" >
+<p align='center'>unix.js</p>
 
-
-<table border="0" cellspacing="20" cellpadding="0">
-	<tr><td nowrap>
-		 Terminal Test<br>&nbsp;
-	</td></tr>
-	<tr><td nowrap>
-		<a href="javascript:termOpen(1)" onfocus="if(this.blur)this.blur();" onmouseover="window.status='terminal 1'; return true" onmouseout="window.status=''; return true" class="termopen">&gt; open terminal &nbsp;</a>
-	</td></tr>
-
-</table>
-
-<div id="termDiv1" style="position:absolute; top:20px; left:100px;"></div>
+<div id="termDiv1" class="center_tty" </div>
 
 </body>
 <script > termOpen(1)</script>
