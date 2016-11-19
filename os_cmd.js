@@ -106,7 +106,7 @@ function commandReset(env) {
 		env.wantChar=true;
 		return
 	}
-	else if (krnlTtyChar==121) {
+	else if (tty.inputChar==121) {
 		cnslType('y'); newLine(); cnslType('halting system for reboot ...');
 		setTimeout('termClose();termOpen()',100)
 	}
@@ -116,7 +116,7 @@ function commandReset(env) {
 	};
 	env.status='';
 	env.wantChar=false;
-	krnlTtyChar=0
+	tty.inputChar=0
 }
 
 function commandHalt(env) {
@@ -128,7 +128,7 @@ function commandHalt(env) {
 		env.wantChar=true;
 		return
 	}
-	else if (krnlTtyChar==121) {
+	else if (tty.inputChar==121) {
 		cnslType('y'); newLine(); cnslType('halting system ...');
 		setTimeout('termClose()',100)
 	}
@@ -138,7 +138,7 @@ function commandHalt(env) {
 	};
 	env.status='';
 	env.wantChar=false;
-	krnlTtyChar=0
+	tty.inputChar=0
 }
 
 function commandHello(env) {
@@ -1105,13 +1105,13 @@ function commandMore(env) {
 			}
 		};
 		env.line=0;
-		krnlTtyChar=32
+		tty.inputChar=32
 	};
 	if (env.stdout) {
 		for (var i=0; i<env.more.length; i++) krnlFOut(env.stdout,txtStripStyles(env.more[i]));
 	}
 	else if (env.line<env.more.length) {
-		if (krnlTtyChar==32) {
+		if (tty.inputChar==32) {
 			var l1=env.line;
 			if ((env.line) || (env.more.length-(env.line+tty.r)>=tty.maxLines-2)) tty.clear();
 			var a=env.line;
@@ -1124,22 +1124,19 @@ function commandMore(env) {
 				tty.write('%+r -- MORE -- %-r (Type: space to continue, \'q\' to quit)');
 			}
 		};
-		if ((env.line<env.more.length) && (krnlTtyChar!=113)) {
+		if ((env.line<env.more.length) && (tty.inputChar!=113)) {
 			env.bin='commandMore';
 			env.status='wait';
 			env.wantChar=true;
 			return
 		}
-		else if (krnlTtyChar==113) {
-			t_c=0;
-			term[tty.r]=cnslGetRowArrray(conf_cols,0);
-			termStyle[tty.r]=cnslGetRowArrray(conf_cols,0);
-			termDisplay(tty.r)
+		else if (tty.inputChar==113) {
+			tty.newLine();
 		};
 	};
 	env.status='';
 	env.wantChar=false;
-	krnlTtyChar=0
+	tty.inputChar=0
 }
 
 function commandCd(env,evaluate) {
@@ -1742,17 +1739,17 @@ function commandMv(env) {
 
 function commandSu(env) {
 	if (env.status=='wait') {
-		if (krnlTtyChar>32) {
-			env.passwd+=String.fromCharCode(krnlTtyChar);
+		if (tty.inputChar>32) {
+			env.passwd+=String.fromCharCode(tty.inputChar);
 		}
-		else if (krnlTtyChar==13) {
+		else if (tty.inputChar==13) {
 			cursorOff();
 			newLine();
 			if (krnlCrypt(env.passwd)==conf_rootpassskey) krnlAddUser(env.user)
 			else krnlFOut(env.stderr,'Sorry.');
 			env.status='';
 			env.wantChar=false;
-			krnlTtyChar=0
+			tty.inputChar=0
 		};
 		return
 	};
@@ -1970,17 +1967,17 @@ function commandHomeImport(env) {
 		env.status='wait';
 		env.wantChar=true;
 	}
-	else if (krnlTtyChar==99) {
+	else if (tty.inputChar==99) {
 		cnslType('import terminated by user.'); newLine();
 		if ((usrExWin) && (usrExWin.closed==false)) usrExWin.close();
 		env.status='';
 		env.wantChar=false;
-		krnlTtyChar=0
+		tty.inputChar=0
 	}
-	else if ((krnlTtyChar==27)) {
+	else if ((tty.inputChar==27)) {
 		env.status='';
 		env.wantChar=false;
-		krnlTtyChar=0
+		tty.inputChar=0
 	}
 	else {
 		termImportCompleted=false;
