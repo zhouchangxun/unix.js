@@ -634,23 +634,22 @@ function krnlLogin(reenter) {
     };
     krnlCurPcs=new KrnlProcess(['login']);
     krnlCurPcs.id='logind';
-    krnlCurPcs.run=krnlLoginDmn;
-    //switch to new process.
-    krnlCurPcs.run(true)
+    krnlLoginDmn(first=true);
 }
 function krnlLoginDmn(first) {
-	  var help='  type user-name (e.g. "guest") and hit <return>.%n';
-    var login_prompt = '%n Login: ';
+	  //var help='  type user-name (e.g. "guest") and hit <return>.%n';
+    var login_prompt = ' Login:';
     if(first) {
         //begin login(redirect 'stdin' to logind process)
-        tty.oldhandler = tty.handler
         tty.handler = krnlLoginDmn;
-
         tty.write(login_prompt)
+				tty._charOut(1);/*do this so that cursor can't backspace */ 
+				tty.lock=false;
+				tty.cursorOn();
         return
     }
     var cmd=this.lineBuffer;
-    var user = cmd.split(':')[1].trim() || "guest"
+    var user = cmd.split(' ')[0] || "guest"
     if (user.length>8) user=user.substring(0,8);
     console.info(' entering system with user:  '+user);
     if (usrVAR.USER!=user) {
@@ -708,6 +707,7 @@ function krnlTTY(env,bincmd) {
 				self[this.bincmd](this.env)
 		}
 		else {
+			//to here when cmd 'exit' executed.
 				krnlPIDs.length=1;
 				krnlLogin(1)
 		}
