@@ -7,7 +7,7 @@ vfsForceFile('/etc/profile', 'f', [
 'alias -s split splitmode on',
 'alias -s unsplit splitmode off',
 'set -s PATH = \'/bin /sbin /usr/bin ~\'',
-'set -s PS = \'[${USER}@${HOST}:${PID}]\'',
+'set -s PS = \'[${USER}@${HOST}:${CWD}]\'',
 'alias -s ll "ls -l"',
 'alias -s bla \'echo "Vergil, Aeneis:" | more /var/testfile\'',
 'stty -blink',
@@ -16,10 +16,6 @@ vfsForceFile('/etc/profile', 'f', [
 'echo " Type \\"info\\" for site information. Type \\"help\\" for available commands."',
 'echo " ------------------------------------------------------------------------------"'
 ], 0755);
-
-vfsForceFile('/etc/motd', 'f', [
-'Aliquando praeterea rideo, iocor, ludo, homo sum. (Plinius iun.)'
-], 0664);
 
 vfsForceFile('/var/testfile', 'f', [
 "01    Arma virumque cano, Troiae qui primus ab oris",
@@ -46,45 +42,7 @@ vfsForceFile('/var/testfile', 'f', [
 "22  venturum excidio Libyae: sic volvere Parcas.",
 "23  id metuens veterisque memor Saturnia belli,",
 "24  prima quod Troiam pro caris gesserat Argis",
-"25  - necdum etiam causae irarum saevique dolores",
-"26  exciderant animo; manet alta mente repostum",
-"27  iudicium Paridis spretaeque iniuria formae",
-"28  et genus invisum et rapti Ganymedis honores -",
-"29  his accensa super iactatos aequore toto",
-"30  Troas, reliquias Danaum qtque inmitis Achilli,",
-"31  arcebat longe Latio, multosque per annos",
-"32  errabant acti fatis maria omnia circum.",
-"33  tantae molis erat Romanam condere gentem.",
-"34    Vix e conspectu Siculae telluris in altum",
-"35  vela dabant laeti et spumas salis aere ruebant,",
-"36  cum Iuno aeternum servans sub pectore volnus",
-"37  haec secum 'mene icepto desistere victam",
-"38  nec posse Italia Teucrorum avertere classem",
-"39  Argivom atque ipsos potuit submergere ponto",
-"40  unius ob noxam et furias Aiacis Oilei?",
-"41  quippe Iovis rapidum iaculata e nubibus ignem",
-"42  disiecitque rates evertitque aequora ventis,",
-"43  illum exspirantem transfixo pectore flammas",
-"44  turbine corripuit scopuloque inflixit acuto;",
-"45  ast ego, quae divom incedo regina, Iovisque",
-"46  et sorror et coniunx, una cum gente tot annos",
-"47  bella gero. et quisquam numen Iunonis adorat",
-"48  praeterea aut supplex aris inponet honrem?'",
-"49    Talia flammato secum dea corde volutans",
-"50  nimborum in patriam, loca feta furentibus austris,",
-"51  Aeoliam venit. hic vasto rex Aeolus antro",
-"52  luctantis ventos tempestatesque sonoras",
-"53  imperio premit ac vinclis et carcere frenat.",
-"54  illi indignantes magno cum murmure montis",
-"55  circam claustra fremunt; celsa sedet Aeolus arce",
-"56  sceptra tenens mollitque animos et temperat iras.",
-"57  ni faciat, maria ac terras caelumque profundum",
-"58  quippe ferant rapidi secum verrantque per auras.",
-"59  sed pater omnipotens speluncis abdidit atris",
-"60  hoc metuens molemque et montis insuper altos",
-"61  inposuit remque dedit, qui foedere certo",
-"62  et premere et laxas sciret dare iussus habenas.",
-"63  ..."
+"25  ..."
 ], 0666);
 
 vfsForceFile('/var/test.sh', 'f', [

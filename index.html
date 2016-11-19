@@ -57,12 +57,6 @@ function termHandler() {
 		else if (cmd=='exit') {
 			this.close();
 		}
-		else if (cmd=='help') {
-			this.write(helpPage);
-		}
-		else if (cmd=='id') {
-			this.write('terminal id: '+this.id);
-		}
 		else {
 			this.type('You typed: '+cmd);
 			this.newLine();

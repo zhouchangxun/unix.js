@@ -415,13 +415,13 @@ function krnlAddUser(user) {
     };
     if (etc<=0) etc=vfsCreate('/etc','d',01777);
     usrVAR.GID=1;
-    var hdr=vfsGetFile('/home');
+    var hdr=vfsGetFile('/home'); /*home dir base. */
     if ((typeof hdr=='object') && (hdr.kind!='d')) {
         vfsUnlink('/home');
         hdr=0
     };
     if (hdr<=0) hdr=vfsCreate('/home','d',0777);
-    var hdir='/home/'+user;
+    var hdir='/home/'+user; /* home dir */
     var passwd=vfsGetFile('/etc/passwd');
     if (passwd<=0) {
         passwd=vfsCreate('/etc/passwd','f',0644);
@@ -431,8 +431,8 @@ function krnlAddUser(user) {
     if (group<=0) {
         group=vfsCreate('/etc/group','f',0644);
         group.lines[0]='system:0:root';
-        group.lines[1]='users:2:';
-        group.lines[2]='wheel:1:root'
+        group.lines[1]='wheel:1:root';
+        group.lines[2]='users:2:';
     };
     if (user=='root') {
         usrVAR.UID='0';
@@ -441,7 +441,7 @@ function krnlAddUser(user) {
         usrGroups[1]=1;
         usrGroups[2]=1;
         usrVAR.USER=user;
-        hdir=usrVAR.HOME='/root';
+        hdir=usrVAR.HOME=usrVAR.CWD='/root';
         var uhd=vfsGetFile(hdir);
         if ((typeof uhd=='object') && (uhd.kind!='d')) {
             vfsUnlink(hdir);
@@ -450,7 +450,7 @@ function krnlAddUser(user) {
         if (uhd<=0) uhd=vfsCreate(hdir,'d',0700);
         var hstf=vfsGetFile(hdir+'/.history');
         if (hstf<=0) hstf=vfsCreate(hdir+'/.history','f',0600);
-        usrHIST=hstf.lines;
+        usrHIST=hstf.lines; /* get reference */
         usrHistPtr=hstf.lines.length;
         return
     };
@@ -465,6 +465,7 @@ function krnlAddUser(user) {
     };
     if (!exists) {
         krnlUIDcnt++;
+        /* (passwd file format): "username : passwd : uid : gid : fullname : home-dir : shell-path" */
         passwd.lines[passwd.lines.length]=user+':*:'+krnlUIDcnt+':2:'+user+':'+hdir+':'+lsh;
         passwd.touch()
     };
@@ -505,8 +506,8 @@ function krnlAddUser(user) {
             group.touch()
         }
     };
-    usrVAR.HOME=hdir;
-    var uhd=vfsGetFile(hdir);
+    usrVAR.HOME=usrVAR.CWD=hdir;
+    var uhd=vfsGetFile(hdir); /* file obj of user home dir . */
     if ((typeof uhd=='object') && (uhd.kind!='d')) {
         vfsUnlink(hdir);
         uhd=0
@@ -564,28 +565,29 @@ function fork_init(){
     krnlGIDs[2] = 'users';
     typeResult('ok')
 }
-        function setup_rc_file(){
-	        if (self.jsuixRC) {
-            typeResult('found');
-            if (self.jsuixRX)  {
-                tty.type('  rc-profile looks good.');
-                tty.newLine();
-            }
-            else {
-                tty.type('# rc-profile seems to have syntactical problems,');
-                tty.newLine();
-                tty.type('# system may hang, trying further ...');
-                tty.newLine()
-            }
-            
-            tty.type('  initializing rc-profile ... ');
-            jsuixRC();
-            typeResult('ok')
-	        }
-	        else {
-	            typeResult('not found');
-	        }
-      	}
+
+function setup_rc_file(){
+  if (self.jsuixRC) {
+    typeResult('found');
+    if (self.jsuixRX)  {
+        tty.type('  rc-profile looks good.');
+        tty.newLine();
+    }
+    else {
+        tty.type('# rc-profile seems to have syntactical problems,');
+        tty.newLine();
+        tty.type('# system may hang, trying further ...');
+        tty.newLine()
+    }
+    
+    tty.type('  initializing rc-profile ... ');
+    jsuixRC();
+    typeResult('ok')
+  }
+  else {
+      typeResult('not found');
+  }
+}
       	
 function krnlInit() {
     // wait for gui
@@ -604,7 +606,7 @@ function krnlInit() {
         setTimeout("fork_init(); tty.type('  bringing up the file-system ... ');", next());
         //init file system.       
         setTimeout("vfsInit();typeResult('ok');tty.type('  building vfs tree ... ');", next());
-        // build vfs tree.
+        //build vfs tree.
         setTimeout("vfsTreeSetup();typeResult('ok');tty.type('  trying for RC-file ... ');", next());
         //RC file
         setTimeout("setup_rc_file(); tty.type('  command-system init... ');", next())
@@ -635,10 +637,10 @@ function krnlLogin(reenter) {
     //switch to new process.
     krnlCurPcs.run(true)
 }
-function krnlLoginDmn(init) {
+function krnlLoginDmn(first) {
 	  var help='  type user-name (e.g. "guest") and hit <return>.%n';
     var login_prompt = '%n Login: ';
-    if(init) {
+    if(first) {
         //begin login(redirect 'stdin' to logind process)
         tty.oldhandler = tty.handler
         tty.handler = krnlLoginDmn;
@@ -648,27 +650,27 @@ function krnlLoginDmn(init) {
     }
     var cmd=this.lineBuffer;
     var user = cmd.split(':')[1].trim() || "guest"
-    console.log(user)
     if (user.length>8) user=user.substring(0,8);
-    this.write('%n entering system with user:  '+user);
+    console.info(' entering system with user:  '+user);
     if (usrVAR.USER!=user) {
         usrHIST.length=0;
         usrHistPtr=0
     };
     //add new user
     krnlAddUser(user);
-    usrVAR.HOME='/home/'+user
-    usrVAR.USER=user;
+    
     krnlCurPcs.id='ttyd'
     krnlCurPcs.args=['TTY'];
     krnlTTY(krnlCurPcs);
     return
 
 }
+/* param env: KrnlProcess obj
+   param bindcmd: */
 function krnlTTY(env,bincmd) {
-    cnslCharMode = false;
+    tty.charMode = false;
     if ((env) && (env.args[0] == 'TTY')) {
-        // init && start login shell
+        // init && start a login shell
         this.env = null;
         this.cmdbin = '';
         this.lock = false;
@@ -678,7 +680,7 @@ function krnlTTY(env,bincmd) {
         shenv.cwd = usrVAR.HOME;
         shenv.loginShell = true;
         tty.clear();
-        console.log(shenv)
+        console.log('shell process:',shenv)
         // return
         shellExec(shenv, 'shellExec');
         tty.handler = shellREPL;
@@ -686,6 +688,9 @@ function krnlTTY(env,bincmd) {
     }
 }
 //krnl
+/*
+param fhin: input file hander obj
+*/
 function krnlGetEnv(args,fhin,fhout) {
     var env=new KrnlProcess([args]);
     var fi=null;

@@ -5,6 +5,9 @@
 // command shell
 
 var shellCookie='#!/bin/sh';
+function parsePS(){
+	
+}
 function shellREPL(){
 	this.newLine()
 	krnlCurPcs.curLine=this.lineBuffer;
@@ -13,8 +16,10 @@ function shellREPL(){
 	}catch (e) {
 		console.error(e.name + ": " + e.message);
 	}
+	tty.ps = shellParseLine(shellParseLine('$PS')[0])[0]
 	tty.prompt();
 }
+
 function shellExec(env) {
 	krnlCurPcs=env;
 	env.id='sh';
@@ -45,6 +50,7 @@ function shellExec(env) {
 	env.curLine='';
 	if (!env.PLH) env.PLH=null;
 	if (!env.PRH) env.PRH=null;
+	
 	while ((thread) || (curLine!='')) {
 		shellFhPermute(env);
 		// get line
@@ -625,7 +631,7 @@ function shellCmdSet(env,args) {
 		if (shellTestName(ks)==false) {
 			if (verbous) krnlFOut(env.stderr,'usage: '+args[0]+' [<varname> [<varname] [= <value> [<value>]]]\n - name must be of [A-Za-z][A-Za-z0-9_]*');
 		}
-		else if ((ks=='PID') || (ks=='VERSION') || (ks=='USER') || (ks=='UID') || (ks=='GID')) {
+		else if ((ks=='CWD') || (ks=='PID') || (ks=='VERSION') || (ks=='USER') || (ks=='UID') || (ks=='GID')) {
 			if (verbous) krnlFOut(env.stderr,'error: "'+ks+'" is a reserved name!');
 		}
 		else {
@@ -730,7 +736,7 @@ function shellCmdCd(env,args) {
 		krnlFOut(env.stderr,p+': permission denied.')
 	}
 	else {
-		env.cwd=p
+		usrVAR.CWD=env.cwd=p
 	}
 }
 
