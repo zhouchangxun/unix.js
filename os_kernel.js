@@ -2,7 +2,7 @@
 //global var
 var conf_defaultmail='changxunzhou'+'@'+'qq.com';
 var conf_defaulturl='https://github.com/zhouchangxun';
-var os_version='unix.js 1.0.0-beta';
+var os_version='unix.js 1.0.0';
 var os_greeting=' '+os_version+' - The JavaScript virtual OS for the web.';
 
 var manPages=new Array();
@@ -666,15 +666,13 @@ function krnlLoginDmn(first) {
     return
 
 }
+
 /* param env: KrnlProcess obj
    param bindcmd: */
 function krnlTTY(env,bincmd) {
     tty.charMode = false;
     if ((env) && (env.args[0] == 'TTY')) {
-        // init && start a login shell
-        this.env = null;
-        this.cmdbin = '';
-        this.lock = false;
+    	  // init && start a login shell
         var shenv;
         var pfg = vfsGetFile('/etc/profile');
         shenv = krnlGetEnv(['shell'], pfg, null);
@@ -683,9 +681,36 @@ function krnlTTY(env,bincmd) {
         tty.clear();
         //console.log('shell process:',shenv)
         shellExec(shenv, 'shellExec');
-        tty.handler = shellREPL;
-				shellREPL(first=true);
+        tty.handler = krnlTTY;
     }
+		else if (env) {
+				tty.env=env;
+				tty.bincmd=bincmd;
+				if (env.wantChar){ 
+					tty.charMode=true
+					tty.lock=false;
+				}
+				else if (env.wantMore) {
+					tty.type(3);
+					tty.type(2);
+					//tty.cursorOn()
+				}
+				else {
+					tty.ps = shellParseLine(shellParseLine('$PS')[0])[0]
+					tty.prompt();
+				};
+				tty.lock=false
+		}
+		else if (this.env) {
+				tty.lock=true;
+				tty.cursorOff()
+				tty.newLine();
+				self[this.bincmd](this.env)
+		}
+		else {
+				krnlPIDs.length=1;
+				krnlLogin(1)
+		}
 }
 //krnl
 /*
@@ -758,9 +783,8 @@ function krnlTestOpts(opt,optstr) {
 }
 
 function krnlCsl2stdin() {
-    var iln=krnlTtyBuffer;
-    krnlTtyBuffer='';
-    return [0,iln]
+    var cmd=tty.lineBuffer;
+    return [0,cmd]
 }
 function krnlKill(pid) {
     var child=krnlPIDs[pid].child;
@@ -777,71 +801,14 @@ function krnlKill(pid) {
     krnlPIDs.length--
 }
 
-function krnlFOut(fh,t,style) {
-    tty.write(t)
-}
-//util txt
-// text related
-
-function txtStripStyles(text) {
-    // strip markup from text
-    var chunks=text.split('%');
-    var esc=(text.charAt(0)!='%');
-    var rs='';
-    for (var i=0; i<chunks.length; i++) {
-        if (esc) {
-            if (chunks[i].length>0) rs+=chunks[i];
-            else if (i>0) rs+='%';
-            esc=false
-        }
-        else {
-            var func=chunks[i].charAt(0);
-            if ((chunks[i].length==0) && (i>0)) {
-                rs+='%';
-                esc=true
-            }
-            else if (func=='n') {
-                rs+='\n';
-                if (chunks[i].length>1) rs+=chunks[i].substring(1);
-            }
-            else if ((func=='+') || (func=='-')) {
-                if (chunks[i].length>2) rs+=chunks[i].substring(2);
-            }
-            else {
-                if (chunks[i].length>0) rs+=chunks[i];
-            }
-        }
-    };
-    return rs
-}
-
-function txtNormalize(n,m) {
-    var s=''+n;
-    while (s.length<m) s='0'+s;
-    return s
-}
-
-function txtFillLeft(t,n) {
-    if (typeof t != 'string') t=''+t;
-    while (t.length<n) t=' '+t;
-    return t
-}
-
-function txtCenter(t,l) {
-    var s='';
-    for (var i=t.length; i<l; i+=2) s+=' ';
-    return s+t
-}
-
-function txtStringReplace(s1,s2,t) {
-    var l1=s1.length;
-    var l2=s2.length;
-    var ofs=t.indexOf(s1);
-    while (ofs>=0) {
-        t=t.substring(0,ofs)+s2+t.substring(ofs+l1);
-        ofs=t.indexOf(s1,ofs+l2)
-    };
-    return t
+function krnlFOut(fh,t,useMore) {
+	//to array type
+	
+	if(fh==null){
+		tty.write(t);
+	}else {
+		for (var i=0; i<t.length; i++) fh.putLine(t[i]);
+	}
 }
 
 console.log('loaded kernel.js ...')

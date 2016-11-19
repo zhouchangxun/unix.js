@@ -501,7 +501,7 @@ function commandInfo(env) {
 		'              * cloud compute & virtualization%n',
 		'              e-mail: changxunzhou@qq.com',		
 		'              github: https://github.com/zhouchangxun/%n',
-		'Type "mail" for email, "web" for website, "help" for available commands.'
+		'Type "mail" for email, "web" for website, "help" for available commands.',
 		],1);
 }
 
@@ -1115,11 +1115,13 @@ function commandMore(env) {
 			if ((env.line) || (env.more.length-(env.line+tty.r)>=tty.maxLines-2)) tty.clear();
 			var a=env.line;
 			var b=Math.min(a+tty.maxLines-1,env.more.length);
-			//for (env.line=a; env.line<b; env.line++) krnlFOut(null,env.more[env.line],1);
 			var buf=new Array();
 			for (env.line=a; env.line<b; env.line++) buf[buf.length]=env.more[env.line];
 			krnlFOut(null,buf,1);
-			if (env.line<env.more.length) tty.write('%+r -- MORE -- %-r (Type: space to continue, \'q\' to quit)',1);
+			if (env.line<env.more.length) {
+				tty.newLine();
+				tty.write('%+r -- MORE -- %-r (Type: space to continue, \'q\' to quit)');
+			}
 		};
 		if ((env.line<env.more.length) && (krnlTtyChar!=113)) {
 			env.bin='commandMore';
