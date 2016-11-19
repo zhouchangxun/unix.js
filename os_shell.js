@@ -7,13 +7,18 @@
 var shellCookie='#!/bin/sh';
 
 function shellREPL(first){
+	var debug=true
 	if(!first){
 		this.newLine()
 		krnlCurPcs.curLine=this.lineBuffer;
-		try {
+		if(debug){
 			shellExec(krnlCurPcs)
-		}catch (e) {
-			console.error(e.name + ": " + e.message);
+		}else{
+			try {
+				shellExec(krnlCurPcs)
+			}catch (e) {
+				console.error(e.name + ": " + e.message);
+			}
 		}
 	}
 	tty.ps = shellParseLine(shellParseLine('$PS')[0])[0]

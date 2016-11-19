@@ -477,7 +477,7 @@ function commandSplitScreen(env) {
 		krnlFOut(env.stderr,'usage: '+args[0]+' on|off');
 		return
 	};
-	tty.clear()();
+	tty.clear();
 	if (split) {
 		cnslType('split mode on',1); newLine();
 		cnslTypeAt(conf_rows-2,0,'--------------------------------------------------------------------------------');
@@ -490,24 +490,17 @@ function commandSplitScreen(env) {
 }
 
 function commandInfo(env) {
-	tty.clear()();
+	tty.clear();
 	krnlFOut(env.stdout,[
 		'%+r Site Information %-r',
-		'                                                                        kk',
-		'  mm mm  mm    aaaaa    sssss   sssss      ww      ww   eeeee   rr rrr  kk  kk',
-		'  mmm mmm mm       aa  ss      ss      ::  ww  ww  ww  ee   ee  rrr     kk kk',
-		'  mm  mm  mm   aaaaaa   ssss    ssss       ww wwww ww  eeeeeee  rr      kkkk',
-		'  mm  mm  mm  aa  aaa      ss      ss  ::   www  www   ee       rr      kk kk',
-		'  mm  mm  mm   aaa aa  sssss   sssss        ww    ww    eeeee   rr      kk  kk%n',
-		'  -           m  e  d  i  a     e  n  v  i  r  o  n  m  e  n  t  s           -%n',
-		'                             http://www.masswerk.at%n',
+		' %n',
+		'                             http://sixloop.cf%n',
 		'              * web design & development',
 		'              * clientside & serverside programming',
-		'              * HTML, Perl, JavaScript, Java, Flash, WAP/WML',
-		'              * graphic design & layout%n',
-		'              * multimedia semiotics & conceptualization',
-		'              * consulting & research on traditional & new media%n',
-		'              fine sites since 1996.%n',
+		'              * C/C++, HTML, JavaScript, Java, Python',
+		'              * cloud compute & virtualization%n',
+		'              e-mail: changxunzhou@qq.com',		
+		'              github: https://github.com/zhouchangxun/%n',
 		'Type "mail" for email, "web" for website, "help" for available commands.'
 		],1);
 }
@@ -516,11 +509,11 @@ function commandFeatures(env) {
 	env.stdin=new VfsFileHandle(new VfsFile('p',[
 		'%+r System Features %-r',
 		os_greeting,
-		' by mass:werk - media environments; (c) N.Landsteiner <http://www.masswerk.at>',
+		' by sixloop <http://www.sixloop.cf>',
 		' ',
 		' JS/UIX is a virtual terminal and UN*X-like operating system for web browsers.',
-		' It is written completely in JavaScript using DHTML for the display.',
-		' The current version is v0.46 (Feb. 2007).',
+		' It is written completely in JavaScript using HTML for the display.',
+		' The current version is v1.0.0 (Nov. 2016).',
 		' ',
 		' ',
 		'%+uFeatures%-u:',
@@ -1119,14 +1112,14 @@ function commandMore(env) {
 	else if (env.line<env.more.length) {
 		if (krnlTtyChar==32) {
 			var l1=env.line;
-			if ((env.line) || (env.more.length-(env.line+tty.r)>=tty.maxLines-2)) tty.clear()();
+			if ((env.line) || (env.more.length-(env.line+tty.r)>=tty.maxLines-2)) tty.clear();
 			var a=env.line;
 			var b=Math.min(a+tty.maxLines-1,env.more.length);
 			//for (env.line=a; env.line<b; env.line++) krnlFOut(null,env.more[env.line],1);
 			var buf=new Array();
 			for (env.line=a; env.line<b; env.line++) buf[buf.length]=env.more[env.line];
 			krnlFOut(null,buf,1);
-			if (env.line<env.more.length) cnslWrite('%+r -- MORE -- %-r (Type: space to continue, \'q\' to quit)',1);
+			if (env.line<env.more.length) tty.write('%+r -- MORE -- %-r (Type: space to continue, \'q\' to quit)',1);
 		};
 		if ((env.line<env.more.length) && (krnlTtyChar!=113)) {
 			env.bin='commandMore';
@@ -1172,13 +1165,13 @@ function commandStty(env) {
 				if (onoff) {
 					var rl=parseInt(env.args[2]);
 					if ((isNaN(rl)==false) && (rl<=conf_rows)) {
-						tty.clear()();
+						tty.clear();
 						tty.maxLines=rl
 					}
 				}
 				else {
 					tty.maxLines=conf_rows;
-					tty.clear()()
+					tty.clear()
 				}
 			}
 			else if ((opt=='sane') && (onoff)) {
@@ -1186,7 +1179,7 @@ function commandStty(env) {
 				cnslBlinkmode=true;
 				cnslBlockmode=true;
 				cnslSmartmode=true;
-				tty.clear()()
+				tty.clear()
 			}
 			else if (((opt=='a') || (opt=='g')) && (!onoff)) {
 				var oa=new Array();
@@ -2209,11 +2202,11 @@ function sysvarsInit() {
 	usrVAR['USER']='user';
 	usrVAR['VERSION']=os_version;
 	usrVAR['HOME']='/home';
+	usrVAR['CWD']='~';
 	usrVAR['HOST']=(self.location.hostname)? self.location.hostname : 'localhost';
 	
 	// aliased commands
 	usrALIAS['about']= 'features',
-	usrALIAS['masswerk']= usrALIAS['mass:werk']='info';
 	usrALIAS['quit']= usrALIAS['close']= 'exit';
 	usrALIAS['split']= 'splitmode on';
 	usrALIAS['unsplit']= 'splitmode off';
