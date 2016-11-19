@@ -5,16 +5,16 @@
 // command shell
 
 var shellCookie='#!/bin/sh';
-function parsePS(){
-	
-}
-function shellREPL(){
-	this.newLine()
-	krnlCurPcs.curLine=this.lineBuffer;
-	try {
-		shellExec(krnlCurPcs)
-	}catch (e) {
-		console.error(e.name + ": " + e.message);
+
+function shellREPL(first){
+	if(!first){
+		this.newLine()
+		krnlCurPcs.curLine=this.lineBuffer;
+		try {
+			shellExec(krnlCurPcs)
+		}catch (e) {
+			console.error(e.name + ": " + e.message);
+		}
 	}
 	tty.ps = shellParseLine(shellParseLine('$PS')[0])[0]
 	tty.prompt();
@@ -736,7 +736,8 @@ function shellCmdCd(env,args) {
 		krnlFOut(env.stderr,p+': permission denied.')
 	}
 	else {
-		usrVAR.CWD=env.cwd=p
+		env.cwd=p
+	  usrVAR.CWD = (usrVAR.HOME==env.cwd)?'~':env.cwd;
 	}
 }
 

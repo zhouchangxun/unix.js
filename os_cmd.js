@@ -88,7 +88,7 @@ function commandHelp(env) {
 }
 
 function commandNews(env) {
-	tty.clear()();
+	tty.clear();
 	env.args=['news','/etc/news'];
 	commandMore(env)
 }

@@ -408,6 +408,7 @@ function vfsTreeSetup() {
 function krnlAddUser(user) {
     var lsh='/bin/sh';
     usrVAR.UID=0; usrVAR.GID=0;
+    usrVAR.CWD='~';
     var etc=vfsGetFile('/etc');
     if ((typeof etc=='object') && (etc.kind!='d')) {
         vfsUnlink('/etc');
@@ -441,7 +442,7 @@ function krnlAddUser(user) {
         usrGroups[1]=1;
         usrGroups[2]=1;
         usrVAR.USER=user;
-        hdir=usrVAR.HOME=usrVAR.CWD='/root';
+        hdir=usrVAR.HOME='/root';
         var uhd=vfsGetFile(hdir);
         if ((typeof uhd=='object') && (uhd.kind!='d')) {
             vfsUnlink(hdir);
@@ -506,7 +507,7 @@ function krnlAddUser(user) {
             group.touch()
         }
     };
-    usrVAR.HOME=usrVAR.CWD=hdir;
+    usrVAR.HOME=hdir;
     var uhd=vfsGetFile(hdir); /* file obj of user home dir . */
     if ((typeof uhd=='object') && (uhd.kind!='d')) {
         vfsUnlink(hdir);
@@ -515,7 +516,7 @@ function krnlAddUser(user) {
     if (uhd<=0) uhd=vfsCreate(hdir,'d',0750);
     uhd.owner=krnlUIDcnt;
     usrVAR.UID=''+krnlUIDcnt;
-    krnlUIDs[krnlUIDcnt]=user;
+    krnlUIDs[krnlUIDcnt]=usrVAR.USER=user;
     usrVAR.GID='2';
     usrGroups[1]=1;
     usrGroups[2]=1;
@@ -680,16 +681,17 @@ function krnlTTY(env,bincmd) {
         shenv.cwd = usrVAR.HOME;
         shenv.loginShell = true;
         tty.clear();
-        console.log('shell process:',shenv)
-        // return
+        //console.log('shell process:',shenv)
         shellExec(shenv, 'shellExec');
         tty.handler = shellREPL;
-        tty.prompt()
+				shellREPL(first=true);
     }
 }
 //krnl
 /*
-param fhin: input file hander obj
+param  fhin: input file hander obj
+return  env:shell env process
+return type: KrnlProcess obj
 */
 function krnlGetEnv(args,fhin,fhout) {
     var env=new KrnlProcess([args]);
@@ -703,12 +705,12 @@ function krnlGetEnv(args,fhin,fhout) {
 }
 function krnlFork(env) {
     var child=new KrnlProcess([]);
+    env.child=child;
     child.id=env.id;
     child.stdin=env.stdin;
     child.stdout=env.stdout;
     child.stderr=env.stderr;
     child.cwd=env.cwd;
-    env.child=child;
     return child
 }
 
