@@ -479,12 +479,13 @@ function commandSplitScreen(env) {
 	};
 	tty.clear();
 	if (split) {
-		cnslType('split mode on',1); newLine();
-		cnslTypeAt(conf_rows-2,0,'--------------------------------------------------------------------------------');
-		cnslTypeAt(conf_rows-1,0,'JS/UIX by mass:werk. type "splitmode off" or "clear" to return to normal mode.');
-		tty.maxLines=conf_rows-2
+		tty.type('split mode on',1); tty.newLine();
+		tty.typeAt(tty.maxLines-2,0,'--------------------------------------------------------------------------------');
+		tty.typeAt(tty.maxLines-1,0,'type "splitmode off" or "clear" to return to normal mode.');
+		tty.maxLines-=2
 	}
 	else  {
+		tty.maxLines+=2
 		krnlFOut(env.stdout,'split mode off',1)
 	}
 }

@@ -1021,7 +1021,7 @@ reset: function() {
 prompt: function() {
 	this.lock=true;
 	if (this.c>0) this.newLine();
-	this.type(this.ps);
+	this.write('%c(blue)'+this.ps+'%c()');
 	this._charOut(1);
 	this.lock=false;
 	this.cursorOn();
