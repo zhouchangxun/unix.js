@@ -1,6 +1,7 @@
 <html>
 <head>
 	<title>unix.js</title>
+	
 	<script type="text/javascript" src="termlib.js"></script>
 	<script type="text/javascript" src="os_rc.js"></script>
 	<script type="text/javascript" src="os_cmd.js"></script>
@@ -16,18 +17,17 @@
 
 var tty;
 
-function termOpen(n) {
-	console.log('open tty...')
+function termOpen() {
+	
 	if (!tty) {
-		tty=new Terminal(
+		console.log('create tty...')
+		tty = new Terminal(
 			{
-				x: 0,
-				y: 0,
 				rows: 24,
 				cols: 80,
-				greeting: '%+r +++ Terminal ready. +++ %-r %n  boot OS ....%n',
+				greeting: '%+r  Power up ...  %-r',
 				id: 1,
-				termDiv: 'termDiv',
+				termDiv: 'termDiv',  //id of terminal div
 				crsrBlinkMode: true,
 				handler: termHandler,
 				exitHandler: termExitHandler,
@@ -41,31 +41,22 @@ function termOpen(n) {
 	}
 	else if (tty.closed) {
 		tty.open();
+		krnlInit();
 	}
 	else {
-		tty.focus();
+		tty.close();
 	}
 }
-
 function termHandler() {
-	// called on <CR> or <ENTER>
+	// called on <CR> or <ENTER> under line mode
 	this.newLine();
 	var cmd=this.lineBuffer;
 	if (cmd!='') {
-		if (cmd=='clear') {
-			this.clear();
-		}
-		else if (cmd=='exit') {
-			this.close();
-		}
-		else {
-			this.type('You typed: '+cmd);
-			this.newLine();
-		}
+			console.log('ignore typed: '+cmd);
+			//this.newLine();
 	}
 	this.prompt();
 }
-
 function termExitHandler() {
 	// optional handler called on exit
 	console.log('close terminal...')
@@ -135,20 +126,21 @@ a.termopen:active {
 
 <body bgcolor="#222222" link="#77dd11" text="#cccccc" alink="#dddddd" vlink="#77dd11" >
 
-<table border="0" cellspacing="20" cellpadding="0" align="center">
-<tr>
-	<td nowrap>home</td>
+	<table border="0" cellspacing="20" cellpadding="0" align="center">
+	<tr>
+		<td nowrap>home</td>
+		<td>|</td>
+		<td nowrap><a href="readme.txt" title="readme.txt (text/plain)">documentation</a></td>
+		<td>|</td>
+		<td nowrap><a href="https://github.com/zhouchangxun/unix.js/" >github</a></td>
+	</tr>
+	</table>
 
-	<td>|</td>
-	<td nowrap><a href="readme.txt" title="readme.txt (text/plain)">documentation</a></td>
-
-</tr>
-</table>
-
-<p align='center'>The JavaScript virtual OS</p>
-
-<div id="termDiv" class="center_tty" </div>
+	<p align='center'>The JavaScript virtual OS
+	<A HREF="javascript:termOpen()" onfocus="if(this.blur)this.blur();"  CLASS="termopen">&lt;power on/off&gt&nbsp;</A>
+</p>
+	<div id="termDiv" class="center_tty" </div>
 
 </body>
-<script > termOpen(1)</script>
+<script > termOpen()</script>
 </html>

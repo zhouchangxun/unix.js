@@ -600,9 +600,9 @@ function krnlInit() {
     }
     if (!tty.closed) {
         
-        tty.cursorSet(3,2)
+        tty.cursorSet(1,2)
         tty.write('version: '+os_version+'%n%n');     
-        tty.type('  starting up [init] ...');
+        tty.write('  starting up [init] ...');
 
         setTimeout("fork_init(); tty.type('  bringing up the file-system ... ');", next());
         //init file system.       
@@ -614,8 +614,8 @@ function krnlInit() {
 				//command init
         setTimeout("commandInit(); typeResult('ok'); tty.type('  setting up system variables ... ');",next());
         //env var init.
-        setTimeout("sysvarsInit();typeResult('ok'); tty.type('  system up and stable. :)');tty.write('%n%n  starting login-demon...%n');", next());
-				//fork login process.
+        setTimeout("sysvarsInit();typeResult('ok'); tty.write('  system up and stable.  :)');tty.write('%n%n  starting login-demon...%n%n');", next());
+				//fork logi	n process.
         setTimeout(" krnlLogin()", next());      
         
     }else{
@@ -628,21 +628,20 @@ function krnlLogin(reenter) {
     usrUID=usrGID=0;
     if (reenter) {
         tty.clear();
-        tty.cursorSet(3,2)
-        tty.write('version: '+os_version+'%n%n');
-        tty.write('re-login to system or type "exit" for shut down.%n');
+        tty.write(tty.globals.center('version: '+os_version, tty.maxCols)+'%n%n%n');
+        tty.write('  re-login to system.%n');
     };
     krnlCurPcs=new KrnlProcess(['login']);
     krnlCurPcs.id='logind';
     krnlLoginDmn(first=true);
 }
 function krnlLoginDmn(first) {
-	  //var help='  type user-name (e.g. "guest") and hit <return>.%n';
-    var login_prompt = ' Login:';
+	  var help='  type user-name (e.g. "guest") and hit <return>.%n%n';
+    var user_prompt = '  UserName:';
     if(first) {
         //begin login(redirect 'stdin' to logind process)
         tty.handler = krnlLoginDmn;
-        tty.write(login_prompt)
+        tty.write(help+user_prompt)
 				tty._charOut(1);/*do this so that cursor can't backspace */ 
 				tty.lock=false;
 				tty.cursorOn();
@@ -651,7 +650,7 @@ function krnlLoginDmn(first) {
     var cmd=this.lineBuffer;
     var user = cmd.split(' ')[0] || "guest"
     if (user.length>8) user=user.substring(0,8);
-    console.info(' entering system with user:  '+user);
+    //console.info(' entering system with user:  '+user);
     if (usrVAR.USER!=user) {
         usrHIST.length=0;
         usrHistPtr=0
