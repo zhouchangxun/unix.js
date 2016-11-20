@@ -94,7 +94,7 @@ function commandNews(env) {
 }
 
 function commandClear(env) {
-	tty.clear();
+	tty.cls();
 }
 
 function commandReset(env) {

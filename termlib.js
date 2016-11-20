@@ -1004,7 +1004,13 @@ clear: function() {
 	this.c=0;
 	window.status='';
 },
+cls: function() {
+	window.status='cls display ...';
+	
+  this.resizeTo(this.maxCols, this.maxLines);
 
+	window.status='';
+},
 reset: function() {
 	if (this.lock) return;
 	this.lock=true;

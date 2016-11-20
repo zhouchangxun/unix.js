@@ -677,7 +677,7 @@ function krnlTTY(env,bincmd) {
         shenv = krnlGetEnv(['shell'], pfg, null);
         shenv.cwd = usrVAR.HOME;
         shenv.loginShell = true;
-        tty.clear();
+        tty.cls();
         //console.log('shell process:',shenv)
         shellExec(shenv, 'shellExec');
         tty.handler = krnlTTY;
