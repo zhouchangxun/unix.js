@@ -524,6 +524,11 @@ function krnlAddUser(user) {
     if (hstf<=0) hstf=vfsCreate(hdir+'/.history','f',0600);
     usrHIST=hstf.lines;
     usrHistPtr=hstf.lines.length;
+    vfsForceFile(hdir+'/test.txt', 'f', [
+			"01    if this file can be opened,",
+			"02  it mean this OS's file system has worked!",
+			"03  enjoy !"
+			], 0666);
 }
 //
 function vfsInit() {
@@ -552,7 +557,7 @@ function KrnlProcess(args) {
 // os boot
 function typeResult(ret){
     tty.cursorSet(tty.r,tty.conf.cols-16)
-    tty.write('... '+ret+'%n')
+    tty.write('... %c(yellow)'+ret+'%n')
 }
         
 //create init process.
@@ -614,8 +619,12 @@ function krnlInit() {
 				//command init
         setTimeout("commandInit(); typeResult('ok'); tty.type('  setting up system variables ... ');",next());
         //env var init.
-        setTimeout("sysvarsInit();typeResult('ok'); tty.write('  system up and stable.  :)');tty.write('%n%n  starting login-demon...%n%n');", next());
-				//fork logi	n process.
+        setTimeout(function  () {
+        	sysvarsInit();typeResult('ok'); 
+        	tty.write('  %c(yellow)system up and stable.  :)');
+        	tty.write('%n%n  starting login-demon...%n%n');
+        }, next());
+				//fork login process.
         setTimeout(" krnlLogin()", next());      
         
     }else{
