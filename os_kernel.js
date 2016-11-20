@@ -809,13 +809,19 @@ function krnlKill(pid) {
     krnlPIDs.length--
 }
 
-function krnlFOut(fh,t,useMore) {
+function krnlFOut(fh,text,useMore) {
 	//to array type
 	
 	if(fh==null){
-		tty.write(t);
+		tty.write(text);
 	}else {
-		for (var i=0; i<t.length; i++) fh.putLine(t[i]);
+		// new line = '%n' prepare any strings or arrys first
+		var ta=[];
+		if (typeof text != 'object') {
+			if (typeof text!='string') text=''+text;
+			ta=text.split('%n');
+		}
+		for (var i=0; i<ta.length; i++) fh.putLine(ta[i]);
 	}
 }
 //util txt
