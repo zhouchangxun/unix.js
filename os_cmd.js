@@ -1736,21 +1736,25 @@ function commandMv(env) {
 		if (verbous) krnlFOut(env.stderr,'Usage: '+env.args[0]+' [-i] <sourcefile> {<sourcefile>} <targetfile>')
 	}
 }
-
+//switch user
 function commandSu(env) {
 	if (env.status=='wait') {
 		if (tty.inputChar>32) {
 			env.passwd+=String.fromCharCode(tty.inputChar);
+			//tty.type('*');
+			//console.log('current input buf:',env.passwd)
 		}
 		else if (tty.inputChar==13) {
-			cursorOff();
-			newLine();
-			if (krnlCrypt(env.passwd)==conf_rootpassskey) krnlAddUser(env.user)
-			else krnlFOut(env.stderr,'Sorry.');
+			tty.cursorOff();
+			tty.newLine();
+			if (krnlCrypt(env.passwd)==conf_rootpassskey) 
+				krnlAddUser(env.user)
+			else 
+				krnlFOut(env.stderr,'Sorry.');
 			env.status='';
 			env.wantChar=false;
 			tty.inputChar=0
-		};
+		}
 		return
 	};
 	var user=env.args[1];
@@ -1768,10 +1772,10 @@ function commandSu(env) {
 		env.bin='commandSu';
 		env.status='wait';
 		env.wantChar=true;
-		cnslType('password: ');
+		tty.write('password: ');
 		env.user='root';
 		env.passwd='';
-		cursorOn();
+		tty.cursorOn();
 		return
 	}
 	else if ((user.toLowerCase()=='root') || user.toLowerCase()=='exit') {

@@ -23,7 +23,7 @@ var krnlDevNull=0;
 var krnlUIDcnt=100;
 var krnlUIDs=new Array();
 var krnlGIDs=new Array();
-var conf_rootpassskey='7B56B841C38BF38C';
+var conf_rootpassskey='8069D76C';
 var os_mdate=new Date(2016,11,11,12,0,0);
 
 var jsuix_hasExceptions = false;
@@ -871,6 +871,33 @@ function txtStringReplace(s1,s2,t) {
         ofs=t.indexOf(s1,ofs+l2)
     };
     return t
+}
+
+// crypt
+var crptSalt= '0e7aff21';
+var crptHexCode = new Array('0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F');
+var crptKeyquence= new Array();
+
+for (var i = 0; i<crptSalt.length; i+=2) {
+	crptKeyquence[crptKeyquence.length]=parseInt(crptSalt.substring(i, i+2),16);
+}
+
+function krnlCrypt(x) {
+	var enc='';
+	var k=0;
+	var last=0;
+	for (var i=0; i<x.length; i++) {
+		var s= (x.charCodeAt(i)+crptKeyquence[k++]+last) % 256;
+		last=s;
+		var h= Math.floor(s/16);
+		var l= s-(h*16);
+		enc+= crptHexCode[h]+crptHexCode[l];
+		if (k==crptKeyquence.length) k=0;
+	};
+	//console.info('passwd encrypted:',enc);
+	return enc
+
+	
 }
 
 console.log('loaded kernel.js ...')
