@@ -1,6 +1,6 @@
 // JS/UIX .rc file
 
-function jsuixRC() {
+function jsunixRC() {
 
 vfsForceFile('/etc/profile', 'f', [
 '#!/bin/sh',
@@ -9,7 +9,6 @@ vfsForceFile('/etc/profile', 'f', [
 'set -s PATH = \'/bin /sbin /usr/bin ~\'',
 'set -s PS = \'[${USER}@${HOST}:${CWD}]\'',
 'alias -s ll "ls -l"',
-'alias -s bla \'echo "Vergil, Aeneis:" | more /var/testfile\'',
 'stty -blink',
 'write "                           %+r     Terminal ready.     %-r"',
 'echo " $VERSION - The JavaScript virtual OS for the web."',
@@ -90,10 +89,5 @@ vfsForceFile('/etc/news', 'f', [
 
 }
 
-
-// must be included as last function for integrety test at start up
-function jsuixRX() {
-	return true
-}
 console.log('loaded os_rc.js ...')
 // eof

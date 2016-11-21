@@ -557,7 +557,10 @@ function KrnlProcess(args) {
 // os boot
 function typeResult(ret){
     tty.cursorSet(tty.r,tty.conf.cols-16)
-    tty.write('... %c(yellow)'+ret+'%n')
+    if(ret != 'ok' )
+        tty.write('... %c(red)'+ret+'%n')
+    else
+        tty.write('... %c(yellow)'+ret+'%n')
 }
         
 //create init process.
@@ -573,25 +576,19 @@ function fork_init(){
 }
 
 function setup_rc_file(){
-  if (self.jsuixRC) {
-    typeResult('found');
-    if (self.jsuixRX)  {
-        tty.type('  rc-profile looks good.');
-        tty.newLine();
-    }
-    else {
-        tty.type('# rc-profile seems to have syntactical problems,');
-        tty.newLine();
-        tty.type('# system may hang, trying further ...');
-        tty.newLine()
-    }
-    
+  if (self.jsunixRC) {
+    typeResult('ok');
     tty.type('  initializing rc-profile ... ');
-    jsuixRC();
-    typeResult('ok')
+      try{
+          jsunixRC();
+          typeResult('ok')
+      }catch(e){
+          typeResult('fail')
+      }
+
   }
   else {
-      typeResult('not found');
+      typeResult('fail');
   }
 }
       	
