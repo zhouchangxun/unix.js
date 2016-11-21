@@ -529,6 +529,16 @@ function krnlAddUser(user) {
 			"02  it mean this OS's file system has worked!",
 			"03  enjoy !"
 			], 0666);
+    vfsForceFile(hdir+'/test.sh', 'f', [
+        '# start this file with "test.sh" or "sh test.sh"',
+        'write "%+istarting test with PID=$PID%-i"',
+        'write \'%+i> "date":%-i\'; date',
+        'write \'%+i> "cal -w":%-i\'; cal -w',
+        'write \'%+i> "cal -w | wc":%-i\'; cal -w | wc',
+        'write \'%+i> "ls -l /var":%-i\'; ls -l /var',
+        'write "%+idone.%-i"'
+    ], 0777);
+
 }
 //
 function vfsInit() {
