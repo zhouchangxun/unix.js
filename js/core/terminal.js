@@ -166,6 +166,7 @@
   version 1.66  textBlur accepts also an array of values for multiple text-shadows.
 
 */
+define([],function(){
 
 var Terminal = function(conf) {
 	if (typeof conf != 'object') conf=new Object();
@@ -176,7 +177,6 @@ var Terminal = function(conf) {
 	this.conf=conf;
 	this.setInitValues();
 }
-
 
 Terminal.prototype = {
 // prototype definitions (save some 2k on indentation)
@@ -1162,7 +1162,7 @@ _cursorBlink: function() {
 		}
 		this.redraw(this.r);
 	}
-	if (this.crsrBlinkMode) this.blinkTimer=setTimeout('Terminal.prototype.globals.activeTerm._cursorBlink()', this.blinkDelay);
+	if (this.crsrBlinkMode) this.blinkTimer=setTimeout('this._cursorBlink()', this.blinkDelay);
 },
 
 _scrollLeft: function(r,c) {
@@ -3417,5 +3417,23 @@ Terminal.prototype._defaultServerCallback = function() {
 	}
 }
 
+//zhoucx add the follow
+	var instanceMap = {}
 
+	function create(conf){
+		var tty =  new Terminal(conf);
+		instanceMap[tty.id] = tty;
+		return tty;
+	}
+	function getById(id){
+		return instanceMap[id]
+	}
+	console.log('terminal.js loaded...');
+	return {
+		"moduleName":'terminal'
+		,"version": '1.0.0'
+		,"create":create
+		,"getById":getById
+	}
+});
 // eof
