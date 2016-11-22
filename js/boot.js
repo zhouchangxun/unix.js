@@ -1,55 +1,51 @@
-// JS/UIX .rc file
+/*
+ init code
+ */
 
-function jsunixRC() {
+var tty;
+termOpen();
 
-vfsForceFile('/etc/profile', 'f', [
-'#!/bin/sh',
-'alias -s split splitmode on',
-'alias -s unsplit splitmode off',
-'set -s PATH = \'/bin /sbin /usr/bin ~\'',
-'set -s PS = \'[${USER}@${HOST}:${CWD}]\'',
-'alias -s ll "ls -l"',
-'stty -blink',
-'write "                           %+r     Terminal ready.     %-r"',
-'echo " $VERSION - The JavaScript virtual OS for the web."',
-'echo " Type \\"info\\" for site information. Type \\"help\\" for available commands."',
-'echo " ------------------------------------------------------------------------------"'
-], 0755);
-	
-vfsForceFile('/var/lx', 'f', [
-'#!/bin/sh',
-'# command-test: copy this to /bin/lx (using cp -p)',
-'echo  "Content of $1:"',
-'ls -C $1',
-'echo `ls -l $1 | wc -l` " file(s)."'
-], 0777);
+function termOpen() {
 
-vfsForceFile('/etc/news', 'f', [
-'%+r JS/UIX News %-r',
-'-------------------------------------------------------------------------------',
-'Oops: JS/UIX was slashdotted (June 16 2005)!',
-'Thanks for mails and comments!',
-' ',
-'Recent changes:',
-' * fixed a new dead keys issue with mac OS (backticks, tilde). [v.0.48]',
-' * fixed the key-handler for Safari (fired BACKSPACE twice). [v.0.46]',
-' * added ecxeption handling for command "js" for supporting browsers. [v.0.46]',
-' * added "/usr/bin/invaders" to demo interactive run time. [v0.45]',
-'   yes, it\'s space invaders for JS/UIX!',
-' * added a new "smart console" feature for smart scolling. [v.044]',
-'   this should avoid most scrolling delays by rendering only visble changes.',
-'   the smart console option is activated by default and may be switched on/off',
-'   using "stty [-]smart".',
-' * fixed a bug in command "which" [v0.43]',
-' * added news-feature (displays this file) [v0.42]',
-' * fixed "wc" command to work like the real thing. [v0.42]',
-' ',
-'Any major changes to the system will be posted on this page.',
-'Stay tuned to be informed.',
-'-------------------------------------------------------------------------------'
-], 0644);
+    if (!tty) {
+        console.log('create tty...')
+        tty = new Terminal(
+            {
+                rows: 24,
+                cols: 80,
+                greeting: '%+r  Power up ...  %-r',
+                id: 1,
+                termDiv: 'termDiv',  //id of terminal div
+                crsrBlinkMode: true,
+                handler: termHandler,
+                exitHandler: termExitHandler,
 
+            }
+        );
+        if (tty) {
+            tty.open();
+            krnlInit();
+        }
+    }
+    else if (tty.closed) {
+        tty.open();
+        krnlInit();
+    }
+    else {
+        tty.close();
+    }
 }
-
-console.log('loaded os_rc.js ...')
-// eof
+function termHandler() {
+    // called on <CR> or <ENTER> under line mode
+    this.newLine();
+    var cmd=this.lineBuffer;
+    if (cmd!='') {
+        console.log('ignore typed: '+cmd);
+        //this.newLine();
+    }
+    this.prompt();
+}
+function termExitHandler() {
+    // optional handler called on exit
+    console.log('close terminal...')
+}
