@@ -28,6 +28,6 @@ require.config({
 //2，about load each js code basing on different dependency
 //按不同先后的依赖关系加载各个JS文件
 
-require(["jquery","workjs01"],function($,w1){
-    require(['workjs02']);
+require(["workjs02"],function(w2){
+    alert('w2.moduleName:'+w2.moduleName);
 });
