@@ -1150,7 +1150,7 @@ _cursorReset: function(crsron) {
 },
 
 _cursorBlink: function() {
-	if (this.blinkTimer) clearTimeout(this.blinkTimer);
+	if (this.blinkTimer) window.clearTimeout(this.blinkTimer);
 	if (this == this.globals.activeTerm) {
 		if (this.crsrBlockMode) {
 			this.styleBuf[this.r][this.c]=(this.styleBuf[this.r][this.c]&1)?
@@ -1162,7 +1162,7 @@ _cursorBlink: function() {
 		}
 		this.redraw(this.r);
 	}
-	if (this.crsrBlinkMode) this.blinkTimer=setTimeout('this._cursorBlink()', this.blinkDelay);
+	if (this.crsrBlinkMode) this.blinkTimer=window.setTimeout(function(tty){tty._cursorBlink();}, this.blinkDelay, this);
 },
 
 _scrollLeft: function(r,c) {
@@ -3425,15 +3425,24 @@ Terminal.prototype._defaultServerCallback = function() {
 		instanceMap[tty.id] = tty;
 		return tty;
 	}
+	function destroy(){
+		delete instanceMap[this.id] ;
+		return
+	}
 	function getById(id){
 		return instanceMap[id]
+	}
+	function getAll(){
+		return instanceMap;
 	}
 	console.log('terminal.js loaded...');
 	return {
 		"moduleName":'terminal'
 		,"version": '1.0.0'
 		,"create":create
+		,"destroy":destroy
 		,"getById":getById
+		,"getAll":getAll
 	}
 });
 // eof

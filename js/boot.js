@@ -40,13 +40,14 @@ function termOpen(terminal) {
         console.log('create tty...')
         tty =  terminal.create(
             {
-                rows: 24,
-                cols: 80,
-                greeting: '%+r  Power up ...  %-r',
                 id: 1,
-                termDiv: 'termDiv',  //id of terminal div
-                crsrBlinkMode: true,
-                handler: termHandler,
+                x:100,y:50,
+                rows: 24, cols: 80,
+                greeting: '%+r  Power up ...  %-r',
+                termDiv: 'termDiv',   //id of terminal div
+                crsrBlinkMode: true, //cursor blink ?
+                crsrBlockMode: false,//cursor type: block / underline.
+                handler: termHandler, // keyboard event callback.
                 exitHandler: termExitHandler,
 
             }
@@ -63,18 +64,19 @@ function termOpen(terminal) {
     else {
         tty.close();
     }
-}
-function termHandler() {
-    // called on <CR> or <ENTER> under line mode
-    this.newLine();
-    var cmd=this.lineBuffer;
-    if (cmd!='') {
-        console.log('ignore typed: '+cmd);
-        //this.newLine();
+
+    function termHandler() {
+        // called on <CR> or <ENTER> under line mode
+        this.newLine();
+        var cmd=this.lineBuffer;
+        if (cmd!='') {
+            console.log('ignore typed: '+cmd);
+            //this.newLine();
+        }
+        this.prompt();
     }
-    this.prompt();
-}
-function termExitHandler() {
-    // optional handler called on exit
-    console.log('close terminal...')
+    function termExitHandler() {
+        // optional handler called on exit
+        console.log('close terminal...')
+    }
 }
