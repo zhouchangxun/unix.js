@@ -55,6 +55,12 @@ vfsForceFile('/var/test.sh', 'f', [
 'write "%+idone.%-i"'
 ], 0777);
 
+vfsForceFile('/var/test.js', 'f', [
+'var arr = [1,5,3,4,2];',
+'arr.sort();',
+'io.out("after sort:"+arr);'
+], 0777);
+
 vfsForceFile('/var/lx', 'f', [
 '#!/bin/sh',
 '# command-test: copy this to /bin/lx (using cp -p)',

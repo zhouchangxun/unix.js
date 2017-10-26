@@ -2021,7 +2021,7 @@ function cmdDirDump(d,prefix) {
 function commandJs(env) {
 	var a=1;
 	var opt=krnlGetOpts(env.args, 1);
-	if (krnlTestOpts(opt,'elts')<0) {
+	if (krnlTestOpts(opt,'eltsf')<0) {
 		krnlFOut(env.stderr,'illegal option.');
 		return
 	};
@@ -2125,12 +2125,29 @@ function commandJs(env) {
 		//var result=eval(vn);
 		krnlFOut(env.stdout,"returned: "+result);
 		ok=true
+	}
+	else if (opt.f) {
+		var fileName = vn;
+		var f=vfsOpen(vfsGetPath(fileName,env.cwd),4);
+		if (f<0) {
+			krnlFOut(env.stderr,vfsGetPath(env.args[1],env.cwd)+': permission denied.');
+			return -1;
+		}
+		var jsCode = f.lines.join(" ");
+		//krnlFOut(env.stdout,'evaluating "'+fileName+'" ...');
+		
+		var result = (jsuix_hasExceptions)? eval('try{eval(\''+jsCode+'\')} catch(e){e}') : eval(jsCode);
+		//var result=eval(vn);
+		//krnlFOut(env.stdout,"returned: "+result);
+		ok=true
 	};
 	if (!ok) {
 			krnlFOut(env.stdout,'usage: '+env.args[0]+' -e|l[t]|s|t <expression>');
 	}
+};
+window.io={
+	out:function(msg){krnlFOut(null,msg);}
 }
-
 // commands as files
 
 var cmdFileStack=new Array();

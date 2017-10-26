@@ -26,7 +26,7 @@ var krnlGIDs=new Array();
 var conf_rootpassskey='8069D76C';
 var os_mdate=new Date(2016,11,11,12,0,0);
 
-var jsuix_hasExceptions = false;
+var jsuix_hasExceptions = true;
 //util
 
 // vfs file system
