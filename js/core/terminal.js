@@ -302,8 +302,10 @@ defaultHandler: function() {
 
 open: function() {
 	if (this.termDivReady()) {
-		if (!this.closed) this._makeTerm();
-		this.init();
+		if (!this.closed){
+			this._makeTerm();
+			this.init();
+		} 
 		return true;
 	}
 	else {
@@ -3417,32 +3419,11 @@ Terminal.prototype._defaultServerCallback = function() {
 	}
 }
 
-//zhoucx add the follow
-	var instanceMap = {}
-
-	function create(conf){
-		var tty =  new Terminal(conf);
-		instanceMap[tty.id] = tty;
-		return tty;
-	}
-	function destroy(){
-		delete instanceMap[this.id] ;
-		return
-	}
-	function getById(id){
-		return instanceMap[id]
-	}
-	function getAll(){
-		return instanceMap;
-	}
 	console.log('terminal.js loaded...');
 	return {
 		"moduleName":'terminal'
 		,"version": '1.0.0'
-		,"create":create
-		,"destroy":destroy
-		,"getById":getById
-		,"getAll":getAll
+		,"Terminal":Terminal
 	}
 });
 // eof

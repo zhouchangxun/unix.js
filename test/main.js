@@ -12,6 +12,7 @@ require.config({
         "jquery":["http://libs.baidu.com/jquery/2.0.3/jquery", "lib/jquery/jquery-1.9.1.min"] //把对应的 jquery 这里写对即可
         ,"workjs01":"work/workjs01"
         ,"workjs02":"work/workjs02"
+        ,"fs":"fs"
         ,"underscore":"" //路径未提供，可网上搜索然后加上即可
     }
 

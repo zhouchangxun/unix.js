@@ -12,7 +12,11 @@ require.config({
     //定义各个JS框架路径名,不用加后缀 .js
     ,paths:{
         //"jquery":["http://libs.baidu.com/jquery/2.0.3/jquery", "lib/jquery/jquery-1.9.1.min"] //把对应的 jquery 这里写对即可
-        "terminal":"core/terminal"
+        "os.common":"core/common"
+        ,"os.fs":"core/fs"
+        ,"os.kernel":"core/kernel"
+        ,"os.terminal":"core/terminal"
+
         ,"underscore":"" //路径未提供，可网上搜索然后加上即可
     }
 
@@ -27,18 +31,20 @@ require.config({
 });
 
 
-require(["terminal"],function(terminal){
+require(["os.kernel", "os.terminal"],function(os, terminal){
 
     termOpen(terminal);
+    os.boot();
 });
 
+var os={};
 var tty;
 
 function termOpen(terminal) {
 
     if (!tty) {
         console.log('create tty...')
-        tty =  terminal.create(
+        os.tty = tty = new terminal.Terminal(
             {
                 id: 1,
                 x:100,y:50,
@@ -54,12 +60,13 @@ function termOpen(terminal) {
         );
         if (tty) {
             tty.open();
-            krnlInit();
+            
         }
     }
     else if (tty.closed) {
+        console.log('open tty...')
         tty.open();
-        krnlInit();
+        //krnlInit();
     }
     else {
         tty.close();
