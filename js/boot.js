@@ -14,6 +14,9 @@ require.config({
         //"jquery":["http://libs.baidu.com/jquery/2.0.3/jquery", "lib/jquery/jquery-1.9.1.min"] //把对应的 jquery 这里写对即可
         "os.common":"core/common"
         ,"os.fs":"core/fs"
+        ,"os.initrd":"core/initrd"
+        ,"os.cmd":"core/cmd"
+        ,"os.shell":'core/shell'
         ,"os.kernel":"core/kernel"
         ,"os.terminal":"core/terminal"
 
@@ -47,7 +50,7 @@ function termOpen(terminal) {
         os.tty = tty = new terminal.Terminal(
             {
                 id: 1,
-                x:100,y:50,
+                x:100,y:50, //location
                 rows: 24, cols: 80,
                 greeting: '%+r  Power up ...  %-r',
                 termDiv: 'termDiv',   //id of terminal div

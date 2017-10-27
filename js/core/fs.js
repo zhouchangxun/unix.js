@@ -421,6 +421,7 @@ function vfsInit() {
     myModule.getDir = vfsGetDir;
     myModule.getFile = vfsGetFile;
     myModule.getParentDir = vfsGetParent;
+    myModule.vfsForceFile = vfsForceFile;
 
     return myModule;
 });

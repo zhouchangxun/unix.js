@@ -663,8 +663,8 @@ function krnlLoginDmn(first) {
 				tty.cursorOn();
         return
     }
-    var cmd=this.lineBuffer;
-    var user = cmd.split(' ')[0] || "guest"
+    var cmdline=this.lineBuffer;
+    var user = cmdline.split(' ')[0] || "guest"
     if (user.length>8) user=user.substring(0,8);
     //console.info(' entering system with user:  '+user);
     if (usrVAR.USER!=user) {

@@ -1,34 +1,47 @@
-define(["os.common","os.fs"],function(os, fs){
+define(["os.common","os.fs", "os.terminal", "os.cmd", "os.shell"],function(os, fs, terminal, cmd, shell){
 
+//import var
+var vfsGetFile = fs.getFile ;
+var vfsCreate = fs.create;
+var vfsForceFile = fs.vfsForceFile;
+
+var shellExec = shell.shellExec;
 //global var
 var conf_defaultmail='changxunzhou'+'@'+'qq.com';
 var conf_defaulturl='https://github.com/zhouchangxun';
+var conf_rootpassskey='8069D76C';
+
 var os_version='unix.js 1.0.0';
 var os_greeting=' '+os_version+' - The JavaScript virtual OS for the web.';
+var os_mdate=new Date(2016,11,11,12,0,0);
 
 var manPages=new Array();
+
+//user
 var usrPATH=new Array();
 var usrALIAS=new Array();
 var usrVAR=new Array();
 var usrHIST=new Array();
 var usrHistPtr=0;
 var usrGroups=new Array();
-var krnlPIDs=new Array();
-var krnlCurPcs=null;
-var krnlTtyBuffer='';
-var krnlTtyChar=0;
-var vfsRoot=null;
-var krnlGuiCounter=0;
-var krnlInodes=0;
-var krnlDevNull=0;
-var krnlUIDcnt=100;
+
 var krnlUIDs=new Array();
 var krnlGIDs=new Array();
-var conf_rootpassskey='8069D76C';
-var os_mdate=new Date(2016,11,11,12,0,0);
+//fs
+var vfsRoot=fs.root;
+var krnlInodes=0;
+//tty
+var krnlTtyBuffer='';
+var krnlTtyChar=0;
+var krnlGuiCounter=0;
+//kernel
+var krnlPIDs=new Array(); //process list
+var krnlCurPcs=null;
+var krnlDevNull=0;
+var krnlUIDcnt=100;
+
 
 var jsuix_hasExceptions = false;
-//util
 
 
 //add user
@@ -62,6 +75,7 @@ function krnlAddUser(user) {
         group.lines[1]='wheel:1:root';
         group.lines[2]='users:2:';
     };
+
     if (user=='root') {
         usrVAR.UID='0';
         usrVAR.GID='1';
@@ -82,6 +96,7 @@ function krnlAddUser(user) {
         usrHistPtr=hstf.lines.length;
         return
     };
+
     var exists=false;
     for (var i=1; i<passwd.lines.length; i++) {
         if (passwd.lines[i].indexOf(user+':')==0) {
@@ -134,7 +149,9 @@ function krnlAddUser(user) {
             group.touch()
         }
     };
+
     usrVAR.HOME=hdir;
+
     var uhd=vfsGetFile(hdir); /* file obj of user home dir . */
     if ((typeof uhd=='object') && (uhd.kind!='d')) {
         vfsUnlink(hdir);
@@ -228,6 +245,7 @@ function krnlInit() {
     function next(){
     	return (i+=369);
     }
+
     if (!tty.closed) {
         
         tty.cursorSet(1,2)
@@ -236,14 +254,15 @@ function krnlInit() {
         //RC file
         setup_rc_file();
 				//command init
-        commandInit(); 
-        setTimeout(function  () {
-        	sysvarsInit();typeResult('ok'); 
-        	tty.write('  %c(yellow)system up and stable.  :)');
-        	tty.write('%n%n  starting login-demon...%n%n');
-        }, next());
-				//fork login process.
-        setTimeout(" krnlLogin()", next());      
+        cmd.commandInit(); 
+
+    	cmd.sysvarsInit();typeResult('ok'); 
+
+    	tty.write('  %c(yellow)system up and stable.  :)');
+    	tty.write('%n%n  starting login-demon...%n%n');
+
+		//fork login process.
+        krnlLogin() ;   
         
     }else{
         alert('please open tty before.')
@@ -258,12 +277,12 @@ function krnlLogin(reenter) {
         tty.write(tty.globals.center('version: '+os_version, tty.maxCols)+'%n%n%n');
         tty.write('  re-login to system.%n');
     };
-    krnlCurPcs=new KrnlProcess(['login']);
+    krnlCurPcs = new KrnlProcess(['login']);
     krnlCurPcs.id='logind';
     krnlLoginDmn(first=true);
 }
 function krnlLoginDmn(first) {
-	  var help='  type user-name (e.g. "guest") and hit <return>.%n%n';
+	var help='  type user-name (e.g. "guest") and hit <return>.%n%n';
     var user_prompt = '  UserName:';
     if(first) {
         //begin login(redirect 'stdin' to logind process)
@@ -304,39 +323,39 @@ function krnlTTY(env,bincmd) {
         shenv.cwd = usrVAR.HOME;
         shenv.loginShell = true;
         tty.cls();
-        //console.log('shell process:',shenv)
+        console.log('shell process:',shenv)
         shellExec(shenv, 'shellExec');
         tty.handler = krnlTTY;
     }
-		else if (env) {
-				tty.env=env;
-				tty.bincmd=bincmd;
-				if (env.wantChar){ 
-					tty.charMode=true
-					tty.lock=false;
-				}
-				else if (env.wantMore) {
-					tty.type(3);
-					tty.type(2);
-					//tty.cursorOn()
-				}
-				else {
-					tty.ps = shellParseLine(shellParseLine('$PS')[0])[0]
-					tty.prompt();
-				};
-				tty.lock=false
-		}
-		else if (this.env) {
-				tty.lock=true;
-				tty.cursorOff()
-				tty.newLine();
-				self[this.bincmd](this.env)
-		}
-		else {
-			//to here when cmd 'exit' executed.
-				krnlPIDs.length=1;
-				krnlLogin(1)
-		}
+	else if (env) {
+			tty.env=env;
+			tty.bincmd=bincmd;
+			if (env.wantChar){ 
+				tty.charMode=true
+				tty.lock=false;
+			}
+			else if (env.wantMore) {
+				tty.type(3);
+				tty.type(2);
+				//tty.cursorOn()
+			}
+			else {
+				tty.ps = shellParseLine(shellParseLine('$PS')[0])[0]
+				tty.prompt();
+			};
+			tty.lock=false
+	}
+	else if (this.env) {
+			tty.lock=true;
+			tty.cursorOff()
+			tty.newLine();
+			self[this.bincmd](this.env)
+	}
+	else {
+		//to here when cmd 'exit' executed.
+			krnlPIDs.length=1;
+			krnlLogin(1)
+	}
 }
 //krnl
 /*
@@ -529,8 +548,6 @@ function krnlCrypt(x) {
 	};
 	//console.info('passwd encrypted:',enc);
 	return enc
-
-	
 }
 
 console.log('loaded kernel.js ...')

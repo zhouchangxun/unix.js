@@ -6,6 +6,7 @@ define([],function(){  //注意模块的写法
 
     //2,define intenal funciton area//函数定义区
     var usrVAR = {};
+    var usrALIAS = {};
     var os_mdate=new Date(2016,11,11,12,0,0);
     console.log('common loaded...')
     //3,should be return/output a object[exports/API] if other module need
@@ -14,6 +15,7 @@ define([],function(){  //注意模块的写法
     myModule.version = version;
     myModule.usrVAR = usrVAR;
     myModule.os_mdate = os_mdate;
+    myModule.usrALIAS = usrALIAS;
     return myModule;
 
     /*

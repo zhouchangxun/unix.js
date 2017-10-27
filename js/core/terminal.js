@@ -2390,7 +2390,7 @@ globals: {
 	},
 	
 	doKeyRepeat: function(ch) {
-		Terminal.prototype.globals.keyHandler({which:ch,_remapped:true,_repeated:true})
+		globals.keyHandler({which:ch,_remapped:true,_repeated:true})
 	},
 
 	keyHandler: function(e) {
