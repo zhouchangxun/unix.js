@@ -1,11 +1,13 @@
-define(["os.common","os.fs", "os.terminal", "os.cmd", "os.shell"],function(os, fs, terminal, cmd, shell){
+define(["os.common","os.fs", "os.terminal", "os.cmd", "os.shell", "os.initrd",],function(os, fs, terminal, cmd, shell){
 
 //import var
 var vfsGetFile = fs.getFile ;
 var vfsCreate = fs.create;
 var vfsForceFile = fs.vfsForceFile;
+var VfsFileHandle = fs.fileHandle;
 
 var shellExec = shell.shellExec;
+var shellParseLine = shell.shellParseLine;
 //global var
 var conf_defaultmail='changxunzhou'+'@'+'qq.com';
 var conf_defaulturl='https://github.com/zhouchangxun';
@@ -254,10 +256,10 @@ function krnlInit() {
         //RC file
         setup_rc_file();
 				//command init
-        cmd.commandInit(); 
+        cmd.commandInit(this); 
 
     	cmd.sysvarsInit();typeResult('ok'); 
-
+        shell.init(this);
     	tty.write('  %c(yellow)system up and stable.  :)');
     	tty.write('%n%n  starting login-demon...%n%n');
 
@@ -313,7 +315,7 @@ function krnlLoginDmn(first) {
 
 /* param env: KrnlProcess obj
    param bindcmd: */
-function krnlTTY(env,bincmd) {
+function krnlTTY(env, bincmd) {
     tty.charMode = false;
     if ((env) && (env.args[0] == 'TTY')) {
     	  // init && start a login shell
@@ -349,7 +351,7 @@ function krnlTTY(env,bincmd) {
 			tty.lock=true;
 			tty.cursorOff()
 			tty.newLine();
-			self[this.bincmd](this.env)
+			shell.shellCMD[this.bincmd](this.env)
 	}
 	else {
 		//to here when cmd 'exit' executed.
@@ -552,7 +554,15 @@ function krnlCrypt(x) {
 
 console.log('loaded kernel.js ...')
     return {
-        boot:krnlInit
+        boot: krnlInit,
+        krnlTTY: krnlTTY,
+        krnlGetEnv: krnlGetEnv,
+        krnlGetOpt:krnlGetOpt,
+        krnlGetOpts:krnlGetOpts,
+        krnlTestOpts:krnlTestOpts,
+        krnlKill: krnlKill,
+        krnlFOut: krnlFOut,
+        krnlFork: krnlFork
     };
 });
 //eof

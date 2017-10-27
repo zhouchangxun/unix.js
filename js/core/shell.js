@@ -3,6 +3,7 @@
 
 define(["os.common", "os.fs"],function(os, fs){
 //import 
+var cmdList =os.cmdList ;
 var VfsFileHandle = fs.VfsFileHandle;
 
 var VfsFile=  fs.File ;          
@@ -17,12 +18,19 @@ var vfsGetDir=  fs.getDir;
 var vfsGetFile=  fs.getFile;        
 var vfsGetParent= fs.getParentDir; 
 var vfsForceFile=  fs.vfsForceFile; 
+var vfsGetPath =fs.vfsGetPath;
+var vfsPermission = fs.vfsPermission;
+var usrVAR = os.usrVAR;
+var usrALIAS = os.usrALIAS;
 //
-var kernel ;
+var kernel ={};
 
 function krnlCsl2stdin() {
     var cmd=tty.lineBuffer;
     return [0,cmd]
+}
+function krnlWordChar(ch) {
+    return (((ch>='a') && (ch<='z')) || ((ch>='A') && (ch<='Z')) || ((ch>='0') && (ch<='9')) || (ch=='_'));
 }
 //
 var shellCookie='#!/bin/sh';
@@ -220,7 +228,7 @@ function shellExec(env) {
 				if ((typeof cmdf=='object') && (cmdf.lines[0]) && ((cmdf.kind=='b') || (cmdf.kind=='f')) && (cmdf.lines[0].indexOf('#!/dev/js/')==0)) {
 					// binary cmd
 					cmdbin=cmdf.lines[0].substring(10);
-					if (self[cmdbin]) {
+					if (cmdList[cmdbin]) {
 						cmdfound=true;
 						env.curLine=curLine;
 						shellFhSet(env,pipe);
@@ -263,7 +271,7 @@ function shellExec(env) {
 				}
 			};
 			if (!cmdfound) {
-				kernel.krnlFOut(env.stderr,'command not found: "'+cmd+'"');
+				kernel.krnlFOut(env.stderr,' command not found: "'+cmd+'"');
 			}
 		};
 		env.curLine=curLine
@@ -272,7 +280,7 @@ function shellExec(env) {
 }
 
 function shellFork(env,cmdbin,args) {
-	var child=krnlFork(env);
+	var child=kernel.krnlFork(env);
 	krnlCurPcs=child;
 	if (cmdbin == 'shellExec') {
 		child.loginShell=false;
@@ -303,7 +311,7 @@ function shellFork(env,cmdbin,args) {
 		for (var i=0; i<args.length; i++) child.args[i]=args[i];
 	}
 	child.id=args[0];
-	self[cmdbin](child);
+	cmdList[cmdbin](child);
 	if (child.status=='') krnlCurPcs=env;
 }
 
@@ -311,7 +319,7 @@ function shellWait(thread,env, forceExit) {
 	if (env.child) {
 		if (env.child.status=='') {
 			krnlCurPcs=env;
-			krnlKill(env.child.pid);
+			kernel.krnlKill(env.child.pid);
 			env.child=null;
 			env.status='';
 			env.wantChar=false;
@@ -634,7 +642,7 @@ function shellCmdSet(env,args) {
 	var verbous=true;
 	var assign=false;
 	var a=1;
-	var opt=krnlGetOpt(args[1])
+	var opt=kernel.krnlGetOpt(args[1])
 	if (opt.length) {
 		a++;
 		if (opt.s) verbous=false;
@@ -671,7 +679,7 @@ function shellCmdUnset(env,args) {
 	var verbous=true;
 	var a=1;
 	if (args.length>1) {
-		var opt=krnlGetOpt(args[1])
+		var opt=kernel.krnlGetOpt(args[1])
 		if (opt.length) {
 			a++;
 			if (opt.s) verbous=false;
@@ -705,7 +713,7 @@ function shellCmdAlias(env,args) {
 	};
 	var verbous=true;
 	var a=1;
-	var opt=krnlGetOpt(args[1])
+	var opt=kernel.krnlGetOpt(args[1])
 	if (opt.length) {
 		a++;
 		if (opt.s) verbous=false;
@@ -730,7 +738,7 @@ function shellCmdUnalias(env,args) {
 	var verbous=true;
 	var a=1;
 	if (args.length>1) {
-		var opt=krnlGetOpt(args[1])
+		var opt=kernel.krnlGetOpt(args[1])
 		if (opt.length) {
 			a++;
 			if (opt.s) verbous=false;
@@ -781,16 +789,17 @@ shellCMD['alias']=shellCmdAlias;
 shellCMD['unalias']=shellCmdUnalias;
 shellCMD['cd']=shellCmdCd;
 shellCMD['pwd']=shellCmdPwd;
-
+shellCMD['shellExec'] = shellExec;
 function init(_kernel){
 	kernel = _kernel;
 }
 
 console.log('loaded os_shell.js');
 	return{
-		init:init,
+		init: init,
 		shellExec:shellExec,
-		shellCMD: shellCMD
+		shellCMD: shellCMD,
+		shellParseLine: shellParseLine
 	};
 });
 /// eof
