@@ -17,11 +17,77 @@ var vfsGetParent= fs.getParentDir;
 var vfsForceFile=  fs.vfsForceFile; 
 var vfsGetPath =fs.vfsGetPath;
 var vfsBasename = fs.vfsBasename;
+var vfsGetSize = fs.vfsGetSize;
+var vfsGetMdate = fs.vfsGetMdate;
 var usrALIAS = os.usrALIAS;
 var usrVAR = os.usrVAR;
 var kernel = {};
+var krnlFOut;
 // module var
 var cmdFileStack=new Array();
+//
+
+function txtStripStyles(text) {
+    // strip markup from text
+    var chunks=text.split('%');
+    var esc=(text.charAt(0)!='%');
+    var rs='';
+    for (var i=0; i<chunks.length; i++) {
+        if (esc) {
+            if (chunks[i].length>0) rs+=chunks[i];
+            else if (i>0) rs+='%';
+            esc=false
+        }
+        else {
+            var func=chunks[i].charAt(0);
+            if ((chunks[i].length==0) && (i>0)) {
+                rs+='%';
+                esc=true
+            }
+            else if (func=='n') {
+                rs+='\n';
+                if (chunks[i].length>1) rs+=chunks[i].substring(1);
+            }
+            else if ((func=='+') || (func=='-')) {
+                if (chunks[i].length>2) rs+=chunks[i].substring(2);
+            }
+            else {
+                if (chunks[i].length>0) rs+=chunks[i];
+            }
+        }
+    };
+    return rs
+}
+
+function txtNormalize(n,m) {
+    var s=''+n;
+    while (s.length<m) s='0'+s;
+    return s
+}
+
+function txtFillLeft(t,n) {
+    if (typeof t != 'string') t=''+t;
+    while (t.length<n) t=' '+t;
+    return t
+}
+
+function txtCenter(t,l) {
+    var s='';
+    for (var i=t.length; i<l; i+=2) s+=' ';
+    return s+t
+}
+
+function txtStringReplace(s1,s2,t) {
+    var l1=s1.length;
+    var l2=s2.length;
+    var ofs=t.indexOf(s1);
+    while (ofs>=0) {
+        t=t.substring(0,ofs)+s2+t.substring(ofs+l1);
+        ofs=t.indexOf(s1,ofs+l2)
+    };
+    return t
+}
+
 // cmd
  function krnlTestOpts(opt,optstr) {
     var legalopts={length:1};
@@ -99,8 +165,8 @@ function commandLs(env) {
 			else so+='---------';
 			so+='  ';
 			so+=(ff.icnt)? ff.icnt:'?';
-			var fo=(ff.owner!=null)? krnlUIDs[ff.owner] : 'unknown';
-			var fg=(ff.group!=null)? krnlGIDs[ff.group] : 'unknown';
+			var fo=(ff.owner!=null)? kernel.data.krnlUIDs[ff.owner] : 'unknown';
+			var fg=(ff.group!=null)? kernel.data.krnlGIDs[ff.group] : 'unknown';
 			while (fo.length<8) fo+=' ';
 			while (fg.length<8) fg+=' ';
 			so+='  '+fo+'  '+fg+'  ';
@@ -138,98 +204,166 @@ function commandLs(env) {
 	};
 	kernel.krnlFOut(env.stdout,so)
 }
-//cmdFileRegistrate('/bin/ls', 'b', commandLs, 644, new Date());
-// function
-function cmdFileRegistrate(path,kind,file,perm,date) {
-	// registrate a file for boot time (owner=root, group=wheel)
-	cmdFileStack[cmdFileStack.length]=[path,kind,file,perm,date]
+function commandCat(env) {
+	var fh=null;
+	var a=1;
+	var buf=new Array();
+	if (env.stdin) {
+		fh=env.stdin
+	}
+	else if (env.args[1]) {
+		var f=vfsOpen(vfsGetPath(env.args[1],env.cwd),4);
+		if (f<0) {
+			kernel.krnlFOut(env.stderr,vfsGetPath(env.args[1],env.cwd)+': permission denied.');
+			return
+		}
+		else if (typeof f=='object') fh=new VfsFileHandle(f);
+		a++
+	};
+	while (fh) {
+		var ldscrp=fh.readLine();
+		while (ldscrp[0]>=0) {
+			buf[buf.length]=ldscrp[1];
+			ldscrp=fh.readLine();
+		};
+		fh=null;
+		if (env.args[a]) {
+			var f=vfsOpen(vfsGetPath(env.args[a],env.cwd),4);
+			if (f<0) {
+				kernel.krnlFOut(env.stderr,vfsGetPath(env.args[a],env.cwd)+': permission denied.');
+				return
+			}
+			else if (typeof f=='object') fh=new VfsFileHandle(f);
+			a++
+		}
+	};
+	kernel.krnlFOut(env.stdout,buf)
+}
+function commandEcho(env) {
+	var args=env.args;
+	var s='';
+	for (var i=1; i<args.length; i++) {
+		s+=args[i];
+		if (i+1!=args.length) s+=' ';
+	};
+	kernel.krnlFOut(env.stdout,s+'%n');
+}
+function commandWrite(env) {
+	var args=env.args;
+	var s='';
+	for (var i=1; i<args.length; i++) {
+		s+=args[i];
+		if (i+1!=args.length) s+=' ';
+	};
+	kernel.krnlFOut(env.stdout,s+'%n',1);
+}
+function commandCal(env) {
+	var args=env.args;
+	var mLength=new Array(31,28,31,30,31,30,31,31,30,31,30,31);
+	var mLabel=new Array('January','February','March','April','May','June','July','August','September','October','November','December');
+	var now=new Date();
+	var weeks=false;
+	var m,y;
+	var a=1;
+	var opt=kernel.krnlGetOpts(args,1);
+	if (krnlTestOpts(opt,'w')<0) {
+		krnlFOut(env.stderr,'illegal option.');
+		return
+	};
+	if (opt.w) weeks=true;
+	a+=opt.length;
+	if (args.length==a) {
+		m=now.getMonth();
+		y=now.getFullYear()
+	}
+	else if (args.length<a+3) {
+		m=parseInt(args[a],10);
+		a++;
+		if ((isNaN(m)) || (m<1) || (m>12)) {
+			krnlFOut(env.stderr,'usage: '+args[0]+' [-w] [<month_nr>] [<year>] - month_nr must be in 1..12');
+			return
+		};
+		m--;
+		if (args.length==a+1) {
+			y=parseInt(args[a],10);
+			if ((isNaN(y)) || (y<1900) || (y>9999)) {
+				krnlFOut(env.stderr,'usage: '+args[0]+' [-w] [<month_nr>] [<year>] - year must be in 1900..9999');
+				return
+			}
+		}
+		else {
+			y=now.getFullYear()
+		}
+	}
+	else {
+		krnlFOut(env.stderr,'usage: '+args[0]+' [-w] [<month_nr>] [<year>] - to many arguments');
+		return
+	};
+	var isLeap=(((y%4==0) && (y%100>0)) || (y%400==0))? true: false;
+	var wcnt=0;
+	var wos=0;
+	var d=new Date(y,m,1,0,0,0);
+	var buf=txtCenter(mLabel[m]+' '+y,20)+'\n S  M Tu  W Th  F  S';
+	if (weeks) {
+		buf+='  week';
+		var df=new Date(y,0,1,0,0,0);
+		var yds=df.getDay();
+		for (var mi=0; mi<m; mi++) yds+= ((mi==1) && (isLeap))? mLength[mi]+1 : mLength[mi];
+		wos=yds%7;
+		wcnt=Math.floor(yds/7)+1;
+	};
+	buf+='\n';
+	var os=d.getDay();
+	var l=mLength[m];
+	if ((m==1) && (isLeap)) l++;
+	for (var i=0; i<os; i++) buf+='   ';
+	for (var i=1; i<=l; i++) {
+		var s= (i<10)? ' ': '';
+		s+=i;
+		if ((i+os)%7==0) {
+			buf+=s;
+			if (weeks) {
+				var ws=(wcnt<10)? ' '+wcnt:wcnt;
+				buf+='   '+ws;
+				wcnt++
+			};
+			buf+='\n';
+		}
+		else buf+=s+' ';
+		if ((weeks) && (i==l) && ((i+os)%7>0)) {
+			var ii=i+os;
+			var ss='';
+			while (ii%7>0) {
+				ss+='   ';
+				ii++
+			};
+			var ws=(wcnt<10)? ' '+wcnt:wcnt;
+			buf+='  '+ss+ws;
+		}
+	};
+	krnlFOut(env.stdout, buf+'\n');
+}
+function cmdRegistrate(path, cmdCallback){
+	var cmdFile = vfsForceFile(path, 'b', ['#!/dev/js'], 0755, os.os_mdate);
+	cmdFile.callback = cmdCallback;
 }
 
 function commandInit(_kernel) {
 	kernel = _kernel;
-	var cmdFiles= [
-	'/sbin/clear', ['#!/dev/js/commandClear'],
-	'/sbin/reset', ['#!/dev/js/commandReset'],
-	'/sbin/reboot', ['#!/dev/js/commandReset'],
-	'/sbin/halt', ['#!/dev/js/commandHalt'],
-	'/sbin/fexport', ['#!/dev/js/commandHomeExport'],
-	'/sbin/fimport', ['#!/dev/js/commandHomeImport'],
-	'/sbin/js', ['#!/dev/js/commandJs'],
-	'/bin/cd', ['#!/dev/js/commandCd','# piped to shell cd','# for current subprocess only'],
-	'/bin/cal', ['#!/dev/js/commandCal'],
-	'/bin/date', ['#!/dev/js/commandDate'],
-	'/bin/features', ['#!/dev/js/commandFeatures'],
-	'/bin/hello', ['#!/dev/js/commandHello'],
-	'/bin/help', ['#!/dev/js/commandHelp'],
-	'/bin/info', ['#!/dev/js/commandInfo'],
-	'/bin/ls', ['#!/dev/js/commandLs'],
-	'/bin/mail', ['#!/dev/js/commandMail'],
-	'/bin/man', ['#!/dev/js/commandMan'],
-	'/bin/browse', ['#!/dev/js/commandBrowse'],
-	'/bin/ps', ['#!/dev/js/commandPs'],
-	'/bin/web', ['#!/dev/js/commandBrowse'],
-	'/bin/parse', ['#!/dev/js/commandParse'],
-	'/bin/time', ['#!/dev/js/commandTime'],
-	'/bin/wc', ['#!/dev/js/commandWc'],
-	'/bin/cat', ['#!/dev/js/commandCat'],
-	'/bin/echo', ['#!/dev/js/commandEcho'],
-	'/bin/type', ['#!/dev/js/commandType'],
-	'/bin/write', ['#!/dev/js/commandWrite'],
-	'/bin/more', ['#!/dev/js/commandMore'],
-	'/bin/pager', ['#!/dev/js/commandMore'],
-	'/bin/pg', ['#!/dev/js/commandMore'],
-	'/bin/splitmode', ['#!/dev/js/commandSplitScreen'],
-	'/bin/stty', ['#!/dev/js/commandStty'],
-	'/bin/sh', ['#!/dev/js/shellExec'],
-	'/bin/cp', ['#!/dev/js/commandCp'],
-	'/bin/mv', ['#!/dev/js/commandMv'],
-	'/bin/mkdir', ['#!/dev/js/commandMkdir'],
-	'/bin/rmdir', ['#!/dev/js/commandRmdir'],
-	'/bin/rm', ['#!/dev/js/commandRm'],
-	'/bin/su', ['#!/dev/js/commandSu'],
-	'/bin/pr', ['#!/dev/js/commandPr'],
-	'/bin/touch', ['#!/dev/js/commandTouch'],
-	'/bin/chmod', ['#!/dev/js/commandChmod'],
-	'/usr/bin/logname', ['#!/dev/js/commandLogname'],
-	'/usr/bin/uname', ['#!/dev/js/commandUname'],
-	'/usr/bin/vi', ['#!/dev/js/commandVi'],
-	'/usr/bin/view', ['#!/dev/js/commandVi'],
-	'/usr/bin/which', ['#!/dev/js/commandWhich'],
-	'/usr/bin/apropos', ['#!/dev/js/commandApropos'],
-	'/usr/bin/news', ['#!/dev/js/commandNews']
-	];
-	for (var i=0; i<cmdFiles.length; i+=2) {
-		vfsForceFile(cmdFiles[i], 'b', cmdFiles[i+1], 0755, os.os_mdate);
-	}
-	for (var i=0; i<cmdFileStack.length; i++) {
-		var f=cmdFileStack[i];
-		vfsForceFile(f[0], f[1], f[2], f[3], f[4]);
-	}
-	cmdList['commandLs'] = commandLs;
+	krnlFOut = kernel.krnlFOut;
+	cmdRegistrate('/bin/ls', commandLs);
+	cmdRegistrate('/bin/cat', commandCat);
+	cmdRegistrate('/bin/echo', commandEcho);
+	cmdRegistrate('/bin/write', commandWrite);
+	cmdRegistrate('/bin/cal', commandCal);
 }
 
-function sysvarsInit() {
-	// preset vars
-	usrVAR['PATH']='/bin/ /sbin/ /usr/bin/ ~/';
-	usrVAR['USER']='user';
-	usrVAR['VERSION']=os.os_version;
-	usrVAR['HOME']='/home';
-	usrVAR['CWD']='~';
-	usrVAR['HOST']=(self.location.hostname)? self.location.hostname : 'localhost';
-	
-	// aliased commands
-	usrALIAS['about']= 'features',
-	usrALIAS['quit']= usrALIAS['close']= 'exit';
-	usrALIAS['split']= 'splitmode on';
-	usrALIAS['unsplit']= 'splitmode off';
-}
+
 	
 console.log('loaded os_cmd.js ...');
 	return {
-		sysvarsInit: sysvarsInit,
-		commandInit: commandInit,
-		cmdFileRegistrate: cmdFileRegistrate,
-		cmdFileStack: cmdFileStack
+		init: commandInit,
+		cmdRegistrate: cmdRegistrate
 	};
 });
 /// eof

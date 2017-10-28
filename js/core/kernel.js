@@ -21,8 +21,8 @@ var manPages=new Array();
 
 //user
 var usrPATH=new Array();
-var usrALIAS=new Array();
-var usrVAR=new Array();
+var usrALIAS= os.usrALIAS;
+var usrVAR=  os.usrVAR;
 var usrHIST=new Array();
 var usrHistPtr=0;
 var usrGroups=new Array();
@@ -48,6 +48,7 @@ var jsuix_hasExceptions = false;
 
 //add user
 function krnlAddUser(user) {
+    console.log('add user:', user);
     var lsh='/bin/sh';
     usrVAR.UID=0; usrVAR.GID=0;
     usrVAR.CWD='~';
@@ -200,6 +201,7 @@ function KrnlProcess(args) {
     this.status='';
     this.child=null;
     krnlPIDs[krnlPIDs.length]=this;
+    console.log('new process:', args);
 }
 // os boot
 function typeResult(ret){
@@ -222,44 +224,19 @@ function fork_init(){
     typeResult('ok')
 }
 
-function setup_rc_file(){
-  if (self.jsunixRC) {
-    typeResult('ok');
-    tty.type('  initializing rc-profile ... ');
-      try{
-          jsunixRC();
-          typeResult('ok')
-      }catch(e){
-          typeResult('fail')
-      }
-
-  }
-  else {
-      typeResult('fail');
-  }
-}
       	
 function krnlInit() {
     // wait for gui
     console.log('boot kernel ...');  
 
-    var i=0;
-    function next(){
-    	return (i+=369);
-    }
-
     if (!tty.closed) {
         
         tty.cursorSet(1,2)
         tty.write('version: '+os_version+'%n%n');     
-
-        //RC file
-        setup_rc_file();
-				//command init
-        cmd.commandInit(this); 
-
-    	cmd.sysvarsInit();typeResult('ok'); 
+        fs.init(this);
+        cmd.init(this);
         shell.init(this);
+        fork_init();
     	tty.write('  %c(yellow)system up and stable.  :)');
     	tty.write('%n%n  starting login-demon...%n%n');
 
@@ -271,6 +248,7 @@ function krnlInit() {
     }
 
 }
+
 function krnlLogin(reenter) {
     //init
     usrUID=usrGID=0;
@@ -325,38 +303,38 @@ function krnlTTY(env, bincmd) {
         shenv.cwd = usrVAR.HOME;
         shenv.loginShell = true;
         tty.cls();
-        console.log('shell process:',shenv)
+        console.log('shell process:', shenv)
         shellExec(shenv, 'shellExec');
         tty.handler = krnlTTY;
     }
 	else if (env) {
-			tty.env=env;
-			tty.bincmd=bincmd;
-			if (env.wantChar){ 
-				tty.charMode=true
-				tty.lock=false;
-			}
-			else if (env.wantMore) {
-				tty.type(3);
-				tty.type(2);
-				//tty.cursorOn()
-			}
-			else {
-				tty.ps = shellParseLine(shellParseLine('$PS')[0])[0]
-				tty.prompt();
-			};
-			tty.lock=false
+		tty.env=env;
+		tty.bincmd=bincmd;
+		if (env.wantChar){ 
+			tty.charMode=true
+			tty.lock=false;
+		}
+		else if (env.wantMore) {
+			tty.type(3);
+			tty.type(2);
+			//tty.cursorOn()
+		}
+		else {
+			tty.ps = shellParseLine(shellParseLine('$PS')[0])[0]
+			tty.prompt();
+		};
+		tty.lock=false
 	}
 	else if (this.env) {
-			tty.lock=true;
-			tty.cursorOff()
-			tty.newLine();
-			shell.shellCMD[this.bincmd](this.env)
+		tty.lock=true;
+		tty.cursorOff()
+		tty.newLine();
+		shell.shellCMD[this.bincmd](this.env)
 	}
 	else {
 		//to here when cmd 'exit' executed.
-			krnlPIDs.length=1;
-			krnlLogin(1)
+		krnlPIDs.length=1;
+		krnlLogin(1)
 	}
 }
 //krnl
@@ -366,7 +344,7 @@ return  env:shell env process
 return type: KrnlProcess obj
 */
 function krnlGetEnv(args,fhin,fhout) {
-    var env=new KrnlProcess([args]);
+    var env=new KrnlProcess(args);
     var fi=null;
     var fo=null;
     if ((fhin) && (typeof fhin == 'object')) fi=fhin;
@@ -463,69 +441,7 @@ function krnlFOut(fh,text,useMore) {
 		for (var i=0; i<ta.length; i++) fh.putLine(ta[i]);
 	}
 }
-//util txt
-// text related
 
-function txtStripStyles(text) {
-    // strip markup from text
-    var chunks=text.split('%');
-    var esc=(text.charAt(0)!='%');
-    var rs='';
-    for (var i=0; i<chunks.length; i++) {
-        if (esc) {
-            if (chunks[i].length>0) rs+=chunks[i];
-            else if (i>0) rs+='%';
-            esc=false
-        }
-        else {
-            var func=chunks[i].charAt(0);
-            if ((chunks[i].length==0) && (i>0)) {
-                rs+='%';
-                esc=true
-            }
-            else if (func=='n') {
-                rs+='\n';
-                if (chunks[i].length>1) rs+=chunks[i].substring(1);
-            }
-            else if ((func=='+') || (func=='-')) {
-                if (chunks[i].length>2) rs+=chunks[i].substring(2);
-            }
-            else {
-                if (chunks[i].length>0) rs+=chunks[i];
-            }
-        }
-    };
-    return rs
-}
-
-function txtNormalize(n,m) {
-    var s=''+n;
-    while (s.length<m) s='0'+s;
-    return s
-}
-
-function txtFillLeft(t,n) {
-    if (typeof t != 'string') t=''+t;
-    while (t.length<n) t=' '+t;
-    return t
-}
-
-function txtCenter(t,l) {
-    var s='';
-    for (var i=t.length; i<l; i+=2) s+=' ';
-    return s+t
-}
-
-function txtStringReplace(s1,s2,t) {
-    var l1=s1.length;
-    var l2=s2.length;
-    var ofs=t.indexOf(s1);
-    while (ofs>=0) {
-        t=t.substring(0,ofs)+s2+t.substring(ofs+l1);
-        ofs=t.indexOf(s1,ofs+l2)
-    };
-    return t
-}
 
 // crypt
 var crptSalt= '0e7aff21';
@@ -562,7 +478,15 @@ console.log('loaded kernel.js ...')
         krnlTestOpts:krnlTestOpts,
         krnlKill: krnlKill,
         krnlFOut: krnlFOut,
-        krnlFork: krnlFork
+        krnlFork: krnlFork,
+        data:{
+            krnlUIDs:krnlUIDs,
+            krnlGIDs:krnlGIDs,
+            usrGroups:usrGroups,
+            krnlPIDs:krnlPIDs,
+            krnlCurPcs:krnlCurPcs,
+            krnlDevNull:krnlDevNull
+        }
     };
 });
 //eof

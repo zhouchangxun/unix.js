@@ -1,5 +1,5 @@
 define(["os.common"],function(os){
-
+var kernel;
 var os_mdate = os.os_mdata;
 var usrVAR = os.usrVAR;
 var krnlInodes;
@@ -60,7 +60,7 @@ function _vfhClose() {
 }
 
 function _vfhPutLine(t) {
-    if (this.file.inode==krnlDevNull) return;
+    if (this.file.inode==kernel.data.krnlDevNull) return;
     var cl=Math.max(this.file.lines.length-1,0);
     if (this.file.lines[cl]) {
         this.file.lines[cl]+=t
@@ -320,7 +320,7 @@ function vfsGetSize(f) {
 
 function vfsGetMdate(f) {
     var fd=f.mdate;
-    return (fd)? fd.getFullYear()+'/'+txtNormalize(fd.getMonth()+1,2)+'/'+txtNormalize(fd.getDate(),2)+' '+txtNormalize(fd.getHours(),2)+':'+txtNormalize(fd.getMinutes(),2)+':'+txtNormalize(fd.getSeconds(),2) : '???';
+    return (fd)? fd.getFullYear()+'/'+os.txt.txtNormalize(fd.getMonth()+1,2)+'/'+os.txt.txtNormalize(fd.getDate(),2)+' '+os.txt.txtNormalize(fd.getHours(),2)+':'+os.txt.txtNormalize(fd.getMinutes(),2)+':'+os.txt.txtNormalize(fd.getSeconds(),2) : '???';
 }
 
 function vfsDirList(d) {
@@ -336,14 +336,21 @@ function vfsDirList(d) {
 
 function vfsPermission(f,mode) {
     if (f) {
-        if (usrVAR.UID==0) return ((mode) && (mode&1) && (f.kind!='d'))? f.mode&0100:1;
+        if (usrVAR.UID==0){
+            return ((mode) && (mode&1) && (f.kind!='d'))? f.mode&0100 : 1;
+        }
         var m=0;
-        if (usrVAR.UID==f.owner) m= (f.mode>>6)&7
-        else if (usrGroups[f.group]) m= (f.mode>>3)&7
-        else m= f.mode&7;
+        if (usrVAR.UID==f.owner) 
+            m= (f.mode>>6)&7
+        else if (kernel.data.usrGroups[f.group]) 
+            m= (f.mode>>3)&7
+        else 
+            m= f.mode&7;
+
         return m&mode
     }
-    else return 0
+    else 
+        return 0
 }
 
 function vfsCheckInPath(fn,fobj) {
@@ -386,7 +393,7 @@ function vfsTreeSetup() {
 
 
 //
-function vfsInit() {
+function vfsInit(_kernel) {
     krnlInodes=100;
     vfsRoot=new VfsFile('d',{});
     vfsRoot.mdate=os_mdate;
@@ -398,12 +405,16 @@ function vfsInit() {
     console.log('fs ready...');
 }
 
+function init(_kernel) {
+    kernel = _kernel;
+}
     var myModule = {}; //推荐方式
     var moduleName = "os.fs";
     var version = "1.0.0";
     var vfsRoot;
-    //2,define intenal funciton area//函数定义区
     vfsInit();
+    //2,define intenal funciton area//函数定义区
+
     console.log(moduleName+' loaded...')
     //3,should be return/output a object[exports/API] if other module need
     //如有需要暴露(返回)本模块API(相关定义的变量和函数)给外部其它模块使用
@@ -425,5 +436,8 @@ function vfsInit() {
     myModule.vfsGetPath = vfsGetPath;
     myModule.vfsPermission = vfsPermission;
     myModule.vfsBasename = vfsBasename;
+    myModule.vfsGetSize = vfsGetSize;
+    myModule.vfsGetMdate = vfsGetMdate;
+    myModule.init = init;
     return myModule;
 });

@@ -39,12 +39,12 @@ function shellREPL(first){
 	var debug=true
 	if(!first){
 		this.newLine()
-		krnlCurPcs.curLine=this.lineBuffer;
+		kernel.krnlCurPcs.curLine=this.lineBuffer;
 		if(debug){
-			shellExec(krnlCurPcs)
+			shellExec(kernel.krnlCurPcs)
 		}else{
 			try {
-				shellExec(krnlCurPcs)
+				shellExec(kernel.krnlCurPcs)
 			}catch (e) {
 				console.error(e.name + ": " + e.message);
 			}
@@ -55,11 +55,11 @@ function shellREPL(first){
 }
 
 function shellExec(env) {
-	krnlCurPcs=env;
+	kernel.krnlCurPcs=env;
 	env.id='sh';
 	if (env.child) {
 		if ((env.child.bin) && (self[env.child.bin])) {
-			krnlCurPcs=env.child;
+			kernel.krnlCurPcs=env.child;
 			self[env.child.bin](env.child);
 			if (env.child.status=='') {
 				shellFhReset(env);
@@ -69,7 +69,7 @@ function shellExec(env) {
 				shellWait(false,env);
 				return
 			};
-			krnlCurPcs=env
+			kernel.krnlCurPcs=env
 		}
 		else {
 			// forced kill
@@ -225,14 +225,14 @@ function shellExec(env) {
 			var cmdpath=(cmd.indexOf('/')>=0)? [env.cwd]:usrVAR.PATH.split(' ');
 			for (var pi=0; pi<cmdpath.length; pi++) {
 				var cmdf=vfsOpen(vfsGetPath(cmd, cmdpath[pi]),1);
-				if ((typeof cmdf=='object') && (cmdf.lines[0]) && ((cmdf.kind=='b') || (cmdf.kind=='f')) && (cmdf.lines[0].indexOf('#!/dev/js/')==0)) {
+				if ((typeof cmdf=='object') && (cmdf.lines[0]) && ((cmdf.kind=='b') || (cmdf.kind=='f')) && (cmdf.lines[0].indexOf('#!/dev/js')==0)) {
 					// binary cmd
-					cmdbin=cmdf.lines[0].substring(10);
-					if (cmdList[cmdbin]) {
+					//cmdbin=cmdf.lines[0].substring(10);
+					if (cmdf.callback) {
 						cmdfound=true;
 						env.curLine=curLine;
 						shellFhSet(env,pipe);
-						shellFork(env,cmdbin,args);
+						shellFork(env,cmdf,args);
 						if (env.child.status=='') {
 							shellFhReset(env);
 							shellWait(true,env);
@@ -281,7 +281,7 @@ function shellExec(env) {
 
 function shellFork(env,cmdbin,args) {
 	var child=kernel.krnlFork(env);
-	krnlCurPcs=child;
+	kernel.krnlCurPcs=child;
 	if (cmdbin == 'shellExec') {
 		child.loginShell=false;
 		var a=0;
@@ -311,14 +311,21 @@ function shellFork(env,cmdbin,args) {
 		for (var i=0; i<args.length; i++) child.args[i]=args[i];
 	}
 	child.id=args[0];
-	cmdList[cmdbin](child);
-	if (child.status=='') krnlCurPcs=env;
+	if (cmdbin == 'shellExec') {
+		shellCMD[cmdbin](child);
+	}else{
+		cmdbin.callback(child);
+	}
+
+	if (child.status==''){
+		kernel.krnlCurPcs=env;	
+	} 
 }
 
 function shellWait(thread,env, forceExit) {
 	if (env.child) {
 		if (env.child.status=='') {
-			krnlCurPcs=env;
+			kernel.krnlCurPcs=env;
 			kernel.krnlKill(env.child.pid);
 			env.child=null;
 			env.status='';
@@ -557,14 +564,14 @@ function shellSubstitute(arg) {
 		for (var i=0; i<chunks.length; i++) {
 			if (toeval[i]) {
 				var v=chunks[i];
-				if (v=='PID') parsed+=krnlCurPcs.pid
+				if (v=='PID') parsed+=kernel.krnlCurPcs.pid
 				else if ((v>='0') && (v<='9')) {
 					v=parseInt(v);
-					if (krnlCurPcs.args[v]) parsed+=krnlCurPcs.args[v];
+					if (kernel.krnlCurPcs.args[v]) parsed+=kernel.krnlCurPcs.args[v];
 				}
 				else if (v.indexOf('ENV_')==0) {
 					v=v.substring(4);
-					if (krnlCurPcs[v]) parsed+=(typeof krnlCurPcs[v]=='object')? krnlCurPcs[v].length: krnlCurPcs[venv];
+					if (kernel.krnlCurPcs[v]) parsed+=(typeof kernel.krnlCurPcs[v]=='object')? kernel.krnlCurPcs[v].length: kernel.krnlCurPcs[venv];
 				}
 				else if (usrVAR[v]!=null) parsed+=usrVAR[v];
 			}
@@ -790,8 +797,26 @@ shellCMD['unalias']=shellCmdUnalias;
 shellCMD['cd']=shellCmdCd;
 shellCMD['pwd']=shellCmdPwd;
 shellCMD['shellExec'] = shellExec;
+
+function sysvarsInit() {
+	// preset vars
+	usrVAR['PATH']='/bin/ /sbin/ /usr/bin/ ~/';
+	usrVAR['USER']='user';
+	usrVAR['VERSION']=os.os_version;
+	usrVAR['HOME']='/home';
+	usrVAR['CWD']='~';
+	usrVAR['HOST']=(self.location.hostname)? self.location.hostname : 'localhost';
+	
+	// aliased commands
+	usrALIAS['about']= 'features',
+	usrALIAS['quit']= usrALIAS['close']= 'exit';
+	usrALIAS['split']= 'splitmode on';
+	usrALIAS['unsplit']= 'splitmode off';
+}
+
 function init(_kernel){
 	kernel = _kernel;
+	sysvarsInit();
 }
 
 console.log('loaded os_shell.js');
