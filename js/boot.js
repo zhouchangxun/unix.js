@@ -19,7 +19,7 @@ require.config({
         ,"os.shell":'core/shell'
         ,"os.kernel":"core/kernel"
         ,"os.terminal":"core/terminal"
-
+        ,"os.bin.vi":"bin/vi"
         ,"underscore":"" //路径未提供，可网上搜索然后加上即可
     }
 
@@ -40,6 +40,7 @@ require(["os.kernel", "os.terminal"],function(kernel, terminal){
     os = kernel;
     termOpen(terminal,os);
     os.boot();
+    require(["os.bin.vi"]);
 });
 
 

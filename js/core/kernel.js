@@ -202,7 +202,7 @@ function KrnlProcess(args) {
     this.status='';
     this.child=null;
     krnlPIDs[krnlPIDs.length]=this;
-    console.log('new process:', args);
+    console.log('new process:', krnlPIDs);
 }
 // os boot
 function typeResult(ret){
@@ -296,8 +296,8 @@ function krnlLoginDmn(first) {
 /* param env: KrnlProcess obj
    param bindcmd: */
 function krnlTTY(env, bincmd) {
-    console.log('enter krnlTTY handle...')
-    //tty.charMode = false;
+    //console.log('enter krnlTTY handle...')
+    tty.charMode = false;
     if ((env) && (env.args[0] == 'TTY')) {
     	console.log('init && start a login shell...');
         var shenv;
@@ -367,7 +367,7 @@ function termCtrlHandler() {
                 }else{
                     tty.cursorOff();
                     tty.newLine();
-                    tty.write(cmdList.join('  '));
+                    tty.write(cmdList.join('    '));
                     tty.newLine();
                     tty.prompt();
                     tty.write(line);

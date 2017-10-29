@@ -171,6 +171,7 @@ define([],function(){
 var Terminal = function(conf) {
 	if (typeof conf != 'object') conf=new Object();
 	for (var i in this.Defaults) {
+		//if not in conf , use default setting.
 		if (typeof conf[i] == 'undefined') conf[i]=this.Defaults[i];
 	}
 	if (typeof conf.handler != 'function') conf.handler=this.defaultHandler;
@@ -2479,7 +2480,7 @@ globals: {
 		if (keyRepeat) {
 			tg.clearRepeatTimer();
 			tg.keyRepeatTimer = window.setTimeout(function(){
-					globals.doKeyRepeat(ch);
+					tty.globals.doKeyRepeat(ch);
 				},
 				(keyRepeat==1)? tg.keyRepeatDelay1:tg.keyRepeatDelay2
 			);

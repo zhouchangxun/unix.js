@@ -281,7 +281,8 @@ function shellExec(env) {
 
 function shellFork(env,cmdbin,args) {
 	var child=kernel.krnlFork(env);
-	kernel.krnlCurPcs=child;
+	kernel.data.krnlCurPcs=child;
+	console.log('cur process:',kernel.data.krnlCurPcs);
 	if (cmdbin == 'shellExec') {
 		child.loginShell=false;
 		var a=0;
@@ -312,7 +313,7 @@ function shellFork(env,cmdbin,args) {
 	}
 	child.id=args[0];
 	if (cmdbin == 'shellExec') {
-		shellCMD[cmdbin](child);
+		shellExec(child);
 	}else{
 		cmdbin.callback(child);
 	}
@@ -610,7 +611,7 @@ function shellWriteOut(env,fn,pipe,append) {
 	var path=vfsGetPath(fn,env.cwd);
 	var f1=vfsOpen(path,2);
 	if (f1) {
-		if (f1.inode==krnlDevNull) return;
+		if (f1.inode==kernel.krnlDevNull) return;
 		if (f1<0) {
 			kernel.krnlFOut(env.stderr,'redirect - permission denied: '+path);
 		}

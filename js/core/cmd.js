@@ -19,6 +19,7 @@ var vfsGetPath =fs.vfsGetPath;
 var vfsBasename = fs.vfsBasename;
 var vfsGetSize = fs.vfsGetSize;
 var vfsGetMdate = fs.vfsGetMdate;
+
 var usrALIAS = os.usrALIAS;
 var usrVAR = os.usrVAR;
 var kernel = {};
@@ -360,6 +361,158 @@ function commandPs(env) {
 	};
 	krnlFOut(env.stdout, buf);
 }
+function commandJs(env) {
+	var jsuix_hasExceptions=true;
+	var a=1;
+	var opt=kernel.krnlGetOpts(env.args, 1);
+	if (kernel.krnlTestOpts(opt,'eltsf')<0) {
+		krnlFOut(env.stderr,'illegal option.');
+		return
+	};
+	a+=opt.length;
+	var vn=env.args[a];
+	var vstring=vn;
+	var vobj=null;
+	if ((opt.l) || (opt.t) || (opt.s)) {
+		if ((vn!=null) && ((vn.indexOf('.')>=0) || (vn.indexOf('[')>=0))) {
+			var va1=vn.split('.');
+			var va=new Array();
+			var vt=new Array();
+			for (var i=0; i<va1.length; i++) {
+				if (va1[i]=='') continue;
+				if (va1[i].indexOf('[')>=0) {
+					var va2=va1[i].split('[');
+					for (var k=0; k<va2.length; k++) {
+						if (va2[k]=='') continue;
+						if ((va2[k].length) && (va2[k].charAt(va2[k].length-1)==']')) va2[k]=va2[k].substring(0,va2[k].length-1);
+						va[va.length]=va2[k];
+						vt[vt.length]=(k==0)?'.':'['
+					}
+				}
+				else {
+					va[va.length]=va1[i];
+					vt[vt.length]='.';
+				}
+			};
+			var vobj=self;
+			var vi=0;
+			var vstring='self';
+			while ((vobj!=null) && (vi<va.length)) {
+				vstring+=(vt[vi]=='[')? '['+va[vi]+']' : '.'+va[vi];
+				vobj=vobj[va[vi++]]
+			}
+		}
+		else vobj=self[vn]
+	};
+	var ok=false
+	if (opt.t) {
+		var s=(vobj)? typeof vobj : 'undefined';
+		if ((vobj!=null) && (typeof vobj=='object') && (vobj.constructor)) {
+			var sc=''+vobj.constructor;
+			var ofs1=sc.indexOf(' ');
+			var ofs2=sc.indexOf('(');
+			if ((ofs1>0) && (ofs2>0)) s+=' '+sc.substring(ofs1+1,ofs2);
+		};
+		krnlFOut(env.stdout,vstring+': '+s);
+		ok=true
+	};
+	if (opt.l) {
+		if (vobj==null) krnlFOut(env.stdout,'undefined')
+		else if (typeof vobj=='object') {
+			var s='';
+			if (vobj.length) {
+				for (var i=0; i<vobj.length; i++) {
+					if (vobj[i]!=null) {
+						if (s!='') s+='\n';
+						s+='['+i+']: '+ ((jsuix_hasExceptions)? eval('try{String(vobj[i])} catch(e){"#ERROR ON ACCESSING PROPERTY#"}') : vobj[i]);
+					}
+				}
+			}
+			else {
+				for (var i in vobj) {
+					if (s!='') s+='\n';
+					s+= i+': '+ ((jsuix_hasExceptions)? eval('try{String(vobj[i])} catch(e){"#ERROR ON ACCESSING PROPERTY#"}') : vobj[i]);
+				}
+			};
+			krnlFOut(env.stdout,s);
+		}
+		else krnlFOut(env.stdout,vobj);
+		ok=true
+	}
+	else if (opt.s) {
+		if (env.args.length>a+1) {
+			var val=''
+			for (var ari=a+1; ari<env.args.length; ari++) {
+				if (env.args[ari]!='') val+=env.args[ari];
+			};
+			if (opt.n) {
+				eval(vstring+'='+val);
+				krnlFOut(env.stderr,'js-var self.'+vstring+' set to "'+val+'" (plain value).')
+			}
+			else {
+				for (var ofs=val.indexOf("'"); val>=0; ofs=val.indexOf("'",ofs+2)) val=val.substring(0,ofs)+"\\'"+val.substring(ofs+1);
+				eval(vstring+'="'+val+'"');
+				krnlFOut(env.stderr,'js-var self.'+vstring+' set to \''+val+'\' (string value).')
+			}
+		}
+		else {
+			krnlFOut(env.stdout,'usage: '+env.args[0]+' -e|l[t]|s|t <expression> -- set: <expression> ::= <varname> <value>');
+		};
+		ok=true
+	}
+	else if (opt.e) {
+		for (var ari=a+1; ari<env.args.length; ari++) {
+			if (env.args[ari]!='') vn+=env.args[ari];
+		};
+		krnlFOut(env.stdout,'evaluating "'+vn+'" in js ...');
+		var result = (jsuix_hasExceptions)? eval('try{eval('+vn+')} catch(e){e}') : eval(vn);
+		//var result=eval(vn);
+		krnlFOut(env.stdout,"returned: "+result);
+		ok=true
+	}
+	else if (opt.f) {
+		var fileName = vn;
+		var f=vfsOpen(vfsGetPath(fileName,env.cwd),4);
+		if (f<0) {
+			krnlFOut(env.stderr,vfsGetPath(env.args[1],env.cwd)+': permission denied.');
+			return -1;
+		}
+		var jsCode = f.lines.join(" ");
+		//krnlFOut(env.stdout,'evaluating "'+fileName+'" ...');
+		
+		var result = (jsuix_hasExceptions)? eval('try{eval(\''+jsCode+'\')} catch(e){e}') : eval(jsCode);
+		//var result=eval(vn);
+		//krnlFOut(env.stdout,"returned: "+result);
+		ok=true
+	};
+	if (!ok) {
+			krnlFOut(env.stdout,'usage: '+env.args[0]+' -e|l[t]|s|t <expression> or -f <filename>');
+	}
+};
+function commandMkdir(env) {
+	var dirs=new Array();
+	if (env.stdin) {
+		ldscrp=env.stdin.readLine();
+		while (ldscrp[0]>=0) {
+			dirs[dirs.length]=vfsGetPath(ldscrp[1],env.cwd);
+			ldscrp=env.stdin.readLine();
+		}
+	};
+	for (var a=1; a<env.args.length; a++) {
+		dirs[dirs.length]=vfsGetPath(env.args[a],env.cwd);
+	};
+	for (var i=0; i<dirs.length; i++) {
+		if (dirs[i]!='') {
+			var d=vfsCreate(dirs[i],'d',0750);
+			if (d==-3) {
+				krnlFOut(env.stderr,dirs[i]+': file already exists.')
+			}
+			else if (d<0) {
+				krnlFOut(env.stderr,dirs[i]+': permission denied.')
+			}
+		}
+	}
+}
 function cmdRegistrate(path, cmdCallback){
 	var cmdFile = vfsForceFile(path, 'b', ['#!/dev/js'], 0755, os.os_mdate);
 	cmdFile.callback = cmdCallback;
@@ -373,7 +526,9 @@ function commandInit(_kernel) {
 	cmdRegistrate('/bin/echo', commandEcho);
 	cmdRegistrate('/bin/write', commandWrite);
 	cmdRegistrate('/bin/cal', commandCal);
-		cmdRegistrate('/bin/ps', commandPs);
+	cmdRegistrate('/bin/ps', commandPs);
+	cmdRegistrate('/bin/js', commandJs);
+	cmdRegistrate('/bin/mkdir', commandMkdir);
 }
 
 
