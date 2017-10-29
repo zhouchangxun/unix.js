@@ -304,9 +304,16 @@ defaultHandler: function() {
 open: function() {
 	if (this.termDivReady()) {
 		if (!this.closed){
+			//console.log('force open terminal');
 			this._makeTerm();
 			this.init();
-		} 
+		}else{
+			//console.log('display terminal');
+			this.globals.setVisible(this.termDiv,1);
+			this.lock=false;
+			this.cursorOn();
+			this.closed=false;
+		}
 		return true;
 	}
 	else {
@@ -315,7 +322,7 @@ open: function() {
 },
 
 close: function() {
-	this.lock=true;
+	this.lock=true; //ignore input event.
 	this.cursorOff();
 	if (this.exitHandler) this.exitHandler();
 	this.globals.setVisible(this.termDiv,0);
@@ -332,6 +339,7 @@ init: function() {
 		}
 		this.clear();
 		this.globals.setVisible(this.termDiv,1);
+		//this.globals.setDisplay(this.termDiv,1);
 		this.globals.enableKeyboard(this);
 		if (this.initHandler) {
 			this.initHandler();

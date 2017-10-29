@@ -12,6 +12,7 @@ require.config({
     //定义各个JS框架路径名,不用加后缀 .js
     ,paths:{
         //"jquery":["http://libs.baidu.com/jquery/2.0.3/jquery", "lib/jquery/jquery-1.9.1.min"] //把对应的 jquery 这里写对即可
+        //,"underscore":"" //路径未提供，可网上搜索然后加上即可
         "os.common":"core/common"
         ,"os.fs":"core/fs"
         ,"os.initrd":"core/initrd"
@@ -20,7 +21,7 @@ require.config({
         ,"os.kernel":"core/kernel"
         ,"os.terminal":"core/terminal"
         ,"os.bin.vi":"bin/vi"
-        ,"underscore":"" //路径未提供，可网上搜索然后加上即可
+  
     }
 
     //include NOT AMD specification js frame code
@@ -44,8 +45,6 @@ require(["os.kernel"],function(kernel){
     // auto open display.
     termOpen();
 });
-
-
 
 function termOpen() {
 
@@ -91,6 +90,7 @@ function termOpen() {
         }
         this.prompt();
     }
+
     function termExitHandler() {
         // optional handler called on exit
         console.log('close terminal...')

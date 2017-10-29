@@ -1,4 +1,4 @@
-define(["os.common","os.fs", "os.terminal", "os.cmd", "os.shell", "os.initrd",],function(os, fs, terminal, cmd, shell){
+define(["os.common","os.fs", "os.terminal", "os.cmd", "os.shell", "os.initrd"],function(os, fs, terminal, cmd, shell){
 
 //import var
 var vfsGetFile = fs.getFile ;
@@ -6,8 +6,8 @@ var vfsCreate = fs.create;
 var vfsForceFile = fs.vfsForceFile;
 var VfsFileHandle = fs.fileHandle;
 
-var shellExec = shell.shellExec;
-var shellParseLine = shell.shellParseLine;
+var shellExec = shell.shellExec; //shell REPL
+var shellParseLine = shell.shellParseLine; //calculate shell var.
 //global var
 var conf_defaultmail='changxunzhou'+'@'+'qq.com';
 var conf_defaulturl='https://github.com/zhouchangxun';
@@ -20,28 +20,25 @@ var os_mdate=new Date(2016,11,11,12,0,0);
 var manPages=new Array();
 
 //user
-var usrPATH=new Array();
 var usrALIAS= os.usrALIAS;
 var usrVAR=  os.usrVAR;
+
+var usrPATH=new Array();
 var usrHIST=new Array();
 var usrHistPtr=0;
-
 var usrGroups=new Array();
 
 //fs
 var vfsRoot=fs.root;
 var krnlInodes=0;
-//tty
-var krnlTtyBuffer='';
-var krnlTtyChar=0;
-var krnlGuiCounter=0;
+
 //kernel
 var krnlPIDs=new Array(); //process list
 var krnlUIDs=new Array();
 var krnlGIDs=new Array();
 var krnlCurPcs=null;
 var krnlDevNull=0;
-var krnlUIDcnt=100;
+var krnlUIDcnt=10; //user uid start index.
 
 
 var jsuix_hasExceptions = false;
@@ -201,7 +198,7 @@ function KrnlProcess(args) {
     this.args=args;
     this.status='';
     this.child=null;
-    krnlPIDs[krnlPIDs.length]=this;
+    krnlPIDs.push(this);
     console.log('new process:', krnlPIDs);
 }
 // os boot
@@ -216,10 +213,10 @@ function typeResult(ret){
 //create init process.
 function fork_init(){
     //tty.write('  starting up [init] ...');
-  	krnlPIDs = [];
     krnlCurPcs = new KrnlProcess(['init']);
     krnlCurPcs.id = 'init';
     krnlUIDs[0] = 'root';
+
     krnlGIDs[0] = 'system';
     krnlGIDs[1] = 'wheel';
     krnlGIDs[2] = 'users';
