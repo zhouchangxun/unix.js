@@ -36,25 +36,27 @@ require.config({
 var os={};
 var tty;
 
-require(["os.kernel", "os.terminal"],function(kernel, terminal){
+require(["os.kernel"],function(kernel){
     os = kernel;
-    termOpen(terminal,os);
     os.boot();
+    /* loading extra bin util. */
     require(["os.bin.vi"]);
+    // auto open display.
+    termOpen();
 });
 
 
 
-function termOpen(terminal,os) {
+function termOpen() {
 
     if (!tty) {
         console.log('create tty...')
-        os.tty = tty = new terminal.Terminal(
+        os.io = tty = new os.tty.Terminal(
             {
                 id: 1,
                 x:100,y:50, //location
                 rows: 24, cols: 80,
-                greeting: '%+r  Power up ...  %-r',
+                greeting: '%+r  Open Display ...  %-r',
                 termDiv: 'termDiv',   //id of terminal div
                 crsrBlinkMode: true, //cursor blink ?
                 crsrBlockMode: false,//cursor type: block / underline.
@@ -66,16 +68,17 @@ function termOpen(terminal,os) {
             }
         );
         if (tty) {
+            console.log('open tty and login system...');
             tty.open();
-            
+            os.login();          
         }
     }
     else if (tty.closed) {
-        console.log('open tty...')
+        console.log('reopen tty...');
         tty.open();
-        //krnlInit();
     }
     else {
+        console.log('close tty...');
         tty.close();
     }
 
@@ -84,8 +87,7 @@ function termOpen(terminal,os) {
         this.newLine();
         var cmd=this.lineBuffer;
         if (cmd!='') {
-            console.log('ignore typed: '+cmd);
-            //this.newLine();
+            this.write('ignore typed: '+cmd);
         }
         this.prompt();
     }

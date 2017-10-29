@@ -401,6 +401,7 @@ function vfsInit(_kernel) {
     vfsRoot.owner=0;
     vfsRoot.group=0;
     vfsRoot.icnt=2;
+
     vfsTreeSetup();
     console.log('fs ready...');
 }

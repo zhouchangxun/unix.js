@@ -215,7 +215,7 @@ function typeResult(ret){
         
 //create init process.
 function fork_init(){
-    tty.write('  starting up [init] ...');
+    //tty.write('  starting up [init] ...');
   	krnlPIDs = [];
     krnlCurPcs = new KrnlProcess(['init']);
     krnlCurPcs.id = 'init';
@@ -223,31 +223,36 @@ function fork_init(){
     krnlGIDs[0] = 'system';
     krnlGIDs[1] = 'wheel';
     krnlGIDs[2] = 'users';
-    typeResult('ok');
+    //typeResult('ok');
 }
 
       	
 function krnlInit() {
-    // wait for gui
-    console.log('boot kernel ...');  
+    console.log('boot kernel ...');
 
-    if (!tty.closed) {
+    status = "booting";
         
-        tty.cursorSet(1,2)
-        tty.write('version: '+os_version+'%n%n');     
-        fs.init(this);
-        cmd.init(this);
-        shell.init(this);
-        fork_init();
-    	tty.write('  %c(yellow)system up and stable.  :)');
-    	tty.write('%n%n  starting login-demon...%n%n');
+    fs.init(this);
+    cmd.init(this);
+    shell.init(this);
+    fork_init();
 
-		//fork login process.
-        krnlLogin() ;   
+    status = "running";
+
+  //   if (!tty.closed) {
         
-    }else{
-        alert('please open tty before.')
-    }
+  //       tty.cursorSet(1,2);
+  //       tty.write('version: '+os_version+'%n%n');     
+
+  //   	tty.write('  %c(yellow)system up and stable.  :)');
+  //   	tty.write('%n%n  starting login-demon...%n%n');
+
+		// //fork login process.
+  //       krnlLogin() ;   
+        
+  //   }else{
+  //       alert('please open tty before.')
+  //   }
 
 }
 
@@ -259,6 +264,7 @@ function krnlLogin(reenter) {
         tty.write(tty.globals.center('version: '+os_version, tty.maxCols)+'%n%n%n');
         tty.write('  re-login to system.%n');
     };
+
     krnlCurPcs = new KrnlProcess(['login']);
     krnlCurPcs.id='logind';
     krnlLoginDmn(first=true);
@@ -569,20 +575,17 @@ console.log('loaded kernel.js ...')
         krnlKill: krnlKill,
         krnlFOut: krnlFOut,
         krnlFork: krnlFork,
-        searchCmdList:searchCmdList,
+        login:krnlLogin,
         termCtrlHandler:termCtrlHandler,
         data:{
             krnlUIDs:krnlUIDs,
             krnlGIDs:krnlGIDs,
             usrGroups:usrGroups,
-            krnlPIDs:krnlPIDs,
             krnlCurPcs:krnlCurPcs,
             krnlDevNull:krnlDevNull
         },
-        modules:{
-            fs: fs,
-            shell:shell
-        }
+        fs: fs,
+        tty:terminal
     };
 });
 //eof

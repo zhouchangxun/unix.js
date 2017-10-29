@@ -206,17 +206,19 @@ function viSetCursorPos(env) {
 	var t_r=0,t_c=0;
 	var l=env.top;
 
-	for (l=env.top; l<env.curline; l++) t_r+=env.bufheight[l];
-	env.lr=t_r;
-	var ll=env.buffer[env.curline].length;
+	for (l=env.top; l<env.curline; l++)
+		t_r += env.bufheight[l];
+	env.lr = t_r;
+	var ll = env.buffer[env.curline].length;
 	if (ll>0) {
-		env.col=Math.min(ll-1,env.lc);
-		if (env.col>tty.conf.cols-1) t_r+=Math.floor(env.col/(tty.conf.cols-1));
-		t_c+=env.col%(tty.conf.cols)
+		env.col = Math.min(ll-1,env.lc);
+		if (env.col > tty.conf.cols-1) 
+			t_r += Math.floor(env.col/(tty.conf.cols-1));
+		t_c += env.col%(tty.conf.cols)
 	}
 	else {
-		t_c=0;
-		env.col=0;
+		t_c = 0;
+		env.col = 0;
 	}
 
 	tty.cursorSet(t_r, t_c);
@@ -373,7 +375,7 @@ function viMoveWord(env,dir) {
 	};
 	viSetCursorPos(env);
 	viStatus(env);
-	tty.cursorOn()
+	tty.cursorOn();
 }
 
 function viMoveWordEnd(env) {
@@ -734,7 +736,7 @@ function viOpenLine(env,ofs) {
 }
 
 function viGetLineHeight(env,l) {
-	return Math.max(1,1+Math.floor((env.buffer[l].length-1)/tty.conf.cols))
+	return Math.max(1, 1+Math.floor((env.buffer[l].length-1)/tty.conf.cols))
 }
 
 function viQuit(env) {
@@ -745,6 +747,7 @@ function viQuit(env) {
 	tty.crsrBlinkMode=env.cursorblink;
 	tty.crsrBlockMode=env.cursorblock;
 	tty.handler = tty.oldHandler;
+	tty.clear();
 	tty.prompt();
 }
 
