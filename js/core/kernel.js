@@ -575,6 +575,7 @@ console.log('loaded kernel.js ...')
         login:krnlLogin,
         termCtrlHandler:termCtrlHandler,
         data:{
+            krnlPIDs:krnlPIDs,
             krnlUIDs:krnlUIDs,
             krnlGIDs:krnlGIDs,
             usrGroups:usrGroups,
