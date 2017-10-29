@@ -796,7 +796,6 @@ shellCMD['alias']=shellCmdAlias;
 shellCMD['unalias']=shellCmdUnalias;
 shellCMD['cd']=shellCmdCd;
 shellCMD['pwd']=shellCmdPwd;
-shellCMD['shellExec'] = shellExec;
 
 function sysvarsInit() {
 	// preset vars

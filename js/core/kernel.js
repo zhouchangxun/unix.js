@@ -313,10 +313,6 @@ function krnlTTY(env, bincmd) {
         return;
     }
 
-    if(tty.inputChar == tty.globals.termKey.TAB){
-        searchCmdList('')
-    }
-
 	if (env) {
 		tty.env=env;
 		tty.bincmd=bincmd;
@@ -340,7 +336,10 @@ function krnlTTY(env, bincmd) {
 		tty.lock=true;
 		tty.cursorOff()
 		tty.newLine();
-		shell.shellCMD[this.bincmd](this.env)
+        if(this.bincmd == 'shellExec')
+            shellExec(this.env);
+		else
+            shell.shellCMD[this.bincmd](this.env)
 	}
 	else {
 		//to here when cmd 'exit' executed.
@@ -355,11 +354,13 @@ function termCtrlHandler() {
     if (ch == tty.globals.termKey.TAB || ch == tty.globals.termKey.ESC) {
         this.lock=true;
         // get the command line input and extract the last word
+        var cmdList=[];
         var line = this._getLine();
         var words = line.split(/\s+/);
         if (words.length) {
             var word=words[words.length-1];
-            var cmdList = searchCmdList(word);
+            //if 
+            cmdList = (words.length <= 1)? searchCmdList(word):searchFileList(word);
             if(cmdList.length > 0){
                 if(cmdList.length==1){
                     tty.type(cmdList[0].substring(word.length)+' ');
@@ -382,8 +383,10 @@ function termCtrlHandler() {
 }
 
 function searchCmdList(cmdName){
-    console.log('find cmd list with prefix('+cmdName+')');
+    //console.log('find cmd list with prefix('+cmdName+')');
     var cmdList = [];
+
+    //search in $PATH
     var path = shellParseLine('$PATH')[0].split(' ');
     for(var i in path){
         var ret=vfsGetFile(path[i]);
@@ -392,7 +395,36 @@ function searchCmdList(cmdName){
             if(name.startsWith( cmdName))
                 cmdList.push(name);
         }
-    }   
+    } 
+
+    //search from shell builtin cmds.
+    for( var name in shell.shellCMD){
+            if(name.startsWith( cmdName))
+                cmdList.push(name);
+    }
+
+    //search from shell alias.
+    for( var name in usrALIAS){
+            if(name.startsWith( cmdName))
+                cmdList.push(name);
+    }      return cmdList;
+}
+
+function searchFileList(cmdName){
+   var cmdList = [];
+
+    //auto complement filename.
+    var path = shellParseLine('$CWD')[0];
+    if(path == "~")
+        path=shellParseLine('$HOME')[0];
+    var ret=vfsGetFile(path);
+    if(typeof ret != 'object') return [];
+    for( var name in ret.lines){
+        if(name.startsWith( cmdName))
+            cmdList.push(name);
+    }
+    
+ 
     return cmdList;
 }
 //krnl
