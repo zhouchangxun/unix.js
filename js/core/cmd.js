@@ -343,6 +343,23 @@ function commandCal(env) {
 	};
 	krnlFOut(env.stdout, buf+'\n');
 }
+function commandPs(env) {
+	var krnlPIDs = kernel.data.krnlPIDs;
+	var buf=new Array();
+	buf[buf.length]=' PID   COMMAND';
+	buf[buf.length]='---------------';
+	for (var i=0; i<krnlPIDs.length; i++) {
+		if (krnlPIDs[i]) {
+			s=' '+i;
+			if (i<10) s+=' ';
+			if (i<100) s+=' ';
+			if (i<1000) s+=' ';
+			s+='  '+krnlPIDs[i].id;
+			buf[buf.length]=s
+		}
+	};
+	krnlFOut(env.stdout, buf);
+}
 function cmdRegistrate(path, cmdCallback){
 	var cmdFile = vfsForceFile(path, 'b', ['#!/dev/js'], 0755, os.os_mdate);
 	cmdFile.callback = cmdCallback;
@@ -356,6 +373,7 @@ function commandInit(_kernel) {
 	cmdRegistrate('/bin/echo', commandEcho);
 	cmdRegistrate('/bin/write', commandWrite);
 	cmdRegistrate('/bin/cal', commandCal);
+		cmdRegistrate('/bin/ps', commandPs);
 }
 
 

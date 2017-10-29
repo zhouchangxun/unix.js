@@ -173,7 +173,7 @@ var Terminal = function(conf) {
 	for (var i in this.Defaults) {
 		if (typeof conf[i] == 'undefined') conf[i]=this.Defaults[i];
 	}
-	if (typeof conf.handler != 'function') conf.handler=Terminal.prototype.defaultHandler;
+	if (typeof conf.handler != 'function') conf.handler=this.defaultHandler;
 	this.conf=conf;
 	this.setInitValues();
 }
@@ -2202,8 +2202,8 @@ globals: {
 	// keyboard methods & controls
 
 	setFocus: function(termref) {
-		Terminal.prototype.globals.activeTerm=termref;
-		Terminal.prototype.globals.clearRepeatTimer();
+		globals.activeTerm=termref;
+		globals.clearRepeatTimer();
 	},
 
 	termKey: {
@@ -2478,8 +2478,9 @@ globals: {
 		if ((ch>=0xE000) && (ch<= 0xF8FF)) return;
 		if (keyRepeat) {
 			tg.clearRepeatTimer();
-			tg.keyRepeatTimer = window.setTimeout(
-				'Terminal.prototype.globals.doKeyRepeat('+ch+')',
+			tg.keyRepeatTimer = window.setTimeout(function(){
+					globals.doKeyRepeat(ch);
+				},
 				(keyRepeat==1)? tg.keyRepeatDelay1:tg.keyRepeatDelay2
 			);
 		}

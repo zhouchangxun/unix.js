@@ -11,7 +11,7 @@ vfsForceFile('/etc/profile', 'f', [
 'set -s PATH = \'/bin /sbin /usr/bin ~\'',
 'set -s PS = \'[${USER}@${HOST}:${CWD}]\'',
 'alias -s ll "ls -l"',
-'stty -blink',
+//'stty -blink',
 'write "                           %+r     Terminal ready.     %-r"',
 'echo " $VERSION - The JavaScript virtual OS for the web."',
 'echo " Type \\"info\\" for site information. Type \\"help\\" for available commands."',

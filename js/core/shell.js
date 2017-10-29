@@ -200,7 +200,7 @@ function shellExec(env) {
 			else {shellWait(thread,env); return};
 		}
 		else if (cmd=='exit') {
-			if ((usrHIST) && (usrHIST.length)) usrHIST.length--; // pop this command
+			//if ((usrHIST) && (usrHIST.length)) usrHIST.length--; // pop this command
 			shellWait(thread,env,true);
 			return
 		}

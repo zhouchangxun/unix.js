@@ -25,10 +25,9 @@ var usrALIAS= os.usrALIAS;
 var usrVAR=  os.usrVAR;
 var usrHIST=new Array();
 var usrHistPtr=0;
+
 var usrGroups=new Array();
 
-var krnlUIDs=new Array();
-var krnlGIDs=new Array();
 //fs
 var vfsRoot=fs.root;
 var krnlInodes=0;
@@ -38,6 +37,8 @@ var krnlTtyChar=0;
 var krnlGuiCounter=0;
 //kernel
 var krnlPIDs=new Array(); //process list
+var krnlUIDs=new Array();
+var krnlGIDs=new Array();
 var krnlCurPcs=null;
 var krnlDevNull=0;
 var krnlUIDcnt=100;
@@ -209,11 +210,12 @@ function typeResult(ret){
     if(ret != 'ok' )
         tty.write('... %c(red)'+ret+'%n')
     else
-        tty.write('... %c(yellow)'+ret+'%n')
+        tty.write('... %c(green)'+ret+'%n')
 }
         
 //create init process.
 function fork_init(){
+    tty.write('  starting up [init] ...');
   	krnlPIDs = [];
     krnlCurPcs = new KrnlProcess(['init']);
     krnlCurPcs.id = 'init';
@@ -221,7 +223,7 @@ function fork_init(){
     krnlGIDs[0] = 'system';
     krnlGIDs[1] = 'wheel';
     krnlGIDs[2] = 'users';
-    typeResult('ok')
+    typeResult('ok');
 }
 
       	
@@ -294,9 +296,10 @@ function krnlLoginDmn(first) {
 /* param env: KrnlProcess obj
    param bindcmd: */
 function krnlTTY(env, bincmd) {
-    tty.charMode = false;
+    console.log('enter krnlTTY handle...')
+    //tty.charMode = false;
     if ((env) && (env.args[0] == 'TTY')) {
-    	  // init && start a login shell
+    	console.log('init && start a login shell...');
         var shenv;
         var pfg = vfsGetFile('/etc/profile');
         shenv = krnlGetEnv(['shell'], pfg, null);
@@ -306,8 +309,15 @@ function krnlTTY(env, bincmd) {
         console.log('shell process:', shenv)
         shellExec(shenv, 'shellExec');
         tty.handler = krnlTTY;
+        //tty.charMode = true;
+        return;
     }
-	else if (env) {
+
+    if(tty.inputChar == tty.globals.termKey.TAB){
+        searchCmdList('')
+    }
+
+	if (env) {
 		tty.env=env;
 		tty.bincmd=bincmd;
 		if (env.wantChar){ 
@@ -320,7 +330,8 @@ function krnlTTY(env, bincmd) {
 			//tty.cursorOn()
 		}
 		else {
-			tty.ps = shellParseLine(shellParseLine('$PS')[0])[0]
+            var format_string = shellParseLine('$PS')[0]; //calculate value of $PS.(result like this: "[${USER}@${HOST}:${CWD}]")
+			tty.ps = shellParseLine(format_string)[0]; //calculate value of format_string.(result like this: "[mike@localhost:/home/]")
 			tty.prompt();
 		};
 		tty.lock=false
@@ -336,6 +347,53 @@ function krnlTTY(env, bincmd) {
 		krnlPIDs.length=1;
 		krnlLogin(1)
 	}
+}
+
+function termCtrlHandler() {
+    console.log('termCtrlHandler');
+    var ch = this.inputChar;
+    if (ch == tty.globals.termKey.TAB || ch == tty.globals.termKey.ESC) {
+        this.lock=true;
+        // get the command line input and extract the last word
+        var line = this._getLine();
+        var words = line.split(/\s+/);
+        if (words.length) {
+            var word=words[words.length-1];
+            var cmdList = searchCmdList(word);
+            if(cmdList.length > 0){
+                if(cmdList.length==1){
+                    tty.type(cmdList[0].substring(word.length)+' ');
+                }else{
+                    tty.cursorOff();
+                    tty.newLine();
+                    tty.write(cmdList.join('  '));
+                    tty.newLine();
+                    tty.prompt();
+                    tty.write(line);
+                    tty.cursorOn();
+
+                }
+            }
+        }
+
+    }
+
+    this.lock=false;
+}
+
+function searchCmdList(cmdName){
+    console.log('find cmd list with prefix('+cmdName+')');
+    var cmdList = [];
+    var path = shellParseLine('$PATH')[0].split(' ');
+    for(var i in path){
+        var ret=vfsGetFile(path[i]);
+        if(typeof ret != 'object') continue;
+        for( var name in ret.lines){
+            if(name.startsWith( cmdName))
+                cmdList.push(name);
+        }
+    }   
+    return cmdList;
 }
 //krnl
 /*
@@ -479,6 +537,8 @@ console.log('loaded kernel.js ...')
         krnlKill: krnlKill,
         krnlFOut: krnlFOut,
         krnlFork: krnlFork,
+        searchCmdList:searchCmdList,
+        termCtrlHandler:termCtrlHandler,
         data:{
             krnlUIDs:krnlUIDs,
             krnlGIDs:krnlGIDs,
@@ -486,6 +546,10 @@ console.log('loaded kernel.js ...')
             krnlPIDs:krnlPIDs,
             krnlCurPcs:krnlCurPcs,
             krnlDevNull:krnlDevNull
+        },
+        modules:{
+            fs: fs,
+            shell:shell
         }
     };
 });

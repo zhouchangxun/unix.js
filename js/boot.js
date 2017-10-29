@@ -33,17 +33,18 @@ require.config({
 
 });
 
-
-require(["os.kernel", "os.terminal"],function(os, terminal){
-
-    termOpen(terminal);
-    os.boot();
-});
-
 var os={};
 var tty;
 
-function termOpen(terminal) {
+require(["os.kernel", "os.terminal"],function(kernel, terminal){
+    os = kernel;
+    termOpen(terminal,os);
+    os.boot();
+});
+
+
+
+function termOpen(terminal,os) {
 
     if (!tty) {
         console.log('create tty...')
@@ -58,7 +59,9 @@ function termOpen(terminal) {
                 crsrBlockMode: false,//cursor type: block / underline.
                 handler: termHandler, // keyboard event callback.
                 exitHandler: termExitHandler,
-
+                ctrlHandler: os.termCtrlHandler,
+                closeOnESC: false,
+                printTab: false
             }
         );
         if (tty) {

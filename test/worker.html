@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+    <!-- web worker是运行在后台的javascript，不会影响页面的性能 -->
+    <p>计数:<output id="result"></output></p>
+    <button onclick="startWorker()">开始worker</button>
+    <button onclick="endWorker()">停止worker</button>  
+    <br><br>
+    <script type="text/javascript">
+       var w;       
+       function startWorker(){
+    	   if(typeof(Worker)!="undefined"){//浏览器支持web worker
+    		   if(typeof(w)=="undefined"){//w是未定义的,还没有开始计数		
+    			   w = new Worker("worker.js");//创建一个Worker对象,利用Worker的构造函数
+    		   }
+    	       //onmessage是Worker对象的properties
+    		   w.onmessage = function(event){//事件处理函数,用来处理后端的web worker传递过来的消息
+    			   document.getElementById("result").innerHTML=event.data;
+    		   };
+    	   }else{
+    		   document.getElementById("result").innerHTML="sorry,your browser does not support web workers";
+    	   }
+       }  
+       function endWorker(){
+          w.terminate();//利用Worker对象的terminated方法,终止
+          w=undefined;
+       }
+    </script>
+</body>
+</html>
