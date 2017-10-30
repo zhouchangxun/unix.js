@@ -2399,7 +2399,8 @@ globals: {
 	},
 	
 	doKeyRepeat: function(ch) {
-		globals.keyHandler({which:ch,_remapped:true,_repeated:true})
+		var tg=Terminal.prototype.globals;
+		tg.keyHandler({which:ch,_remapped:true,_repeated:true})
 	},
 
 	keyHandler: function(e) {

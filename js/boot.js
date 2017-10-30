@@ -34,16 +34,17 @@ require.config({
 
 });
 
-var os={};
+var os={}; //only export var.
 var tty;
 
 require(["os.kernel"],function(kernel){
     os = kernel;
+    termOpen();
     os.boot();
     /* loading extra bin util. */
     require(["os.bin.vi"]);
     // auto open display.
-    termOpen();
+    //termOpen();
 });
 
 function termOpen() {
@@ -55,7 +56,7 @@ function termOpen() {
                 id: 1,
                 x:100,y:50, //location
                 rows: 24, cols: 80,
-                greeting: '%+r  Open Display ...  %-r',
+                greeting: '%+r  Open Console ...  %-r',
                 termDiv: 'termDiv',   //id of terminal div
                 crsrBlinkMode: true, //cursor blink ?
                 crsrBlockMode: false,//cursor type: block / underline.
@@ -69,7 +70,7 @@ function termOpen() {
         if (tty) {
             console.log('open tty and login system...');
             tty.open();
-            os.login();          
+            //os.login(); //         
         }
     }
     else if (tty.closed) {

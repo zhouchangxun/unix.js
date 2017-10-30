@@ -198,7 +198,14 @@ function KrnlProcess(args) {
     //console.log('new process:', krnlPIDs);
 }
 // os boot
+ function setStatus(msg){
+    if(!tty) return;
+    
+    tty.write('  ['+new Date().toISOString()+'] '+msg+'... ');
+}
 function typeResult(ret){
+    if(!tty) return;
+
     tty.cursorSet(tty.r,tty.conf.cols-16)
     if(ret != 'ok' )
         tty.write('... %c(red)'+ret+'%n')
@@ -208,7 +215,7 @@ function typeResult(ret){
         
 //create init process.
 function fork_init(){
-    //tty.write('  starting up [init] ...');
+    setStatus('starting up [init] ...');
     krnlCurPcs = new KrnlProcess(['init']);
     krnlCurPcs.id = 'init';
     krnlUIDs[0] = 'root';
@@ -216,7 +223,7 @@ function fork_init(){
     krnlGIDs[0] = 'system';
     krnlGIDs[1] = 'wheel';
     krnlGIDs[2] = 'users';
-    //typeResult('ok');
+    typeResult('ok');
 }
 
       	
@@ -224,30 +231,33 @@ function krnlInit() {
     console.log('boot kernel ...');
 
     status = "booting";
-        
-    fs.init(this);
-    disk.init();
-    cmd.init(this);
-    shell.init(this);
+    setStatus("init os.fs...");
+    try{ fs.init(this); typeResult('ok');}catch(e){typeResult('failed');}
+    setStatus("init os.disk...");
+    try{ disk.init(this); typeResult('ok');}catch(e){typeResult('failed');}
+    setStatus("init os.cmd...");
+    try{ cmd.init(this); typeResult('ok');}catch(e){typeResult('failed');}
+    setStatus("init os.shell...");
+    try{ shell.init(this); typeResult('ok');}catch(e){typeResult('failed');}
 
     fork_init();
 
     status = "running";
 
-  //   if (!tty.closed) {
+    if (tty && !tty.closed) {
         
-  //       tty.cursorSet(1,2);
-  //       tty.write('version: '+os_version+'%n%n');     
+        //tty.cursorSet(1,2);
+        tty.write('  version: '+os_version+'%n%n');     
 
-  //   	tty.write('  %c(yellow)system up and stable.  :)');
-  //   	tty.write('%n%n  starting login-demon...%n%n');
+    	tty.write('  %c(yellow)system up and stable.  :)');
+    	tty.write('%n%n  starting login-demon...%n%n');
 
-		// //fork login process.
-  //       krnlLogin() ;   
+		//fork login process.
+        krnlLogin() ;   
         
-  //   }else{
-  //       alert('please open tty before.')
-  //   }
+    }else{
+        alert('please open tty before.')
+    }
 
 }
 
@@ -271,9 +281,9 @@ function krnlLoginDmn(first) {
         //begin login(redirect 'stdin' to logind process)
         tty.handler = krnlLoginDmn;
         tty.write(help+user_prompt)
-				tty._charOut(1);/*do this so that cursor can't backspace */ 
-				tty.lock=false;
-				tty.cursorOn();
+		tty._charOut(1);/*do this so that cursor can't backspace */ 
+		tty.lock=false;
+		tty.cursorOn();
         return
     }
     var cmd=this.lineBuffer;
@@ -282,11 +292,11 @@ function krnlLoginDmn(first) {
     //console.info(' entering system with user:  '+user);
     if (usrVAR.USER!=user) {
         usrHIST.length=0;
-        usrHistPtr=0
+        usrHistPtr=0;
     };
     //add new user
     krnlAddUser(user);
-    
+    //enter tty daemon.
     krnlCurPcs.id='ttyd'
     krnlCurPcs.args=['TTY'];
     krnlTTY(krnlCurPcs);

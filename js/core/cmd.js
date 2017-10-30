@@ -2,7 +2,6 @@
 define(["os.common", "os.fs"],function(os, fs){
 
 //import method
-var cmdList= os.cmdList
 var VfsFile=  fs.File ;          
 var VfsFileHandle=  fs.fileHandle;     
 var vfsRoot=  fs.root ;          
@@ -24,9 +23,8 @@ var usrALIAS = os.usrALIAS;
 var usrVAR = os.usrVAR;
 var kernel = {};
 var krnlFOut;
+
 // module var
-var cmdFileStack=new Array();
-//
 
 function txtStripStyles(text) {
     // strip markup from text
@@ -513,6 +511,9 @@ function commandMkdir(env) {
 		}
 	}
 }
+function commandClear(env) {
+	tty.cls();
+}
 function cmdRegistrate(path, cmdCallback){
 	var cmdFile = vfsForceFile(path, 'b', ['#!/dev/js'], 0755, os.os_mdate);
 	cmdFile.callback = cmdCallback;
@@ -529,6 +530,7 @@ function commandInit(_kernel) {
 	cmdRegistrate('/bin/ps', commandPs);
 	cmdRegistrate('/bin/js', commandJs);
 	cmdRegistrate('/bin/mkdir', commandMkdir);
+	cmdRegistrate('/bin/clear', commandClear);
 }
 
 

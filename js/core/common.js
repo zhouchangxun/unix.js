@@ -7,7 +7,6 @@ define([],function(){  //注意模块的写法
     //2,define intenal funciton area//函数定义区
     var usrVAR = {};
     var usrALIAS = {};
-    var cmdList = {};
 
     var os_mdate=new Date(2016,11,11,12,0,0);
 
@@ -83,7 +82,7 @@ function txtStringReplace(s1,s2,t) {
     myModule.usrVAR = usrVAR;
     myModule.os_mdate = os_mdate;
     myModule.usrALIAS = usrALIAS;
-    myModule.cmdList = cmdList;
+
     myModule.txt={
         txtNormalize:txtNormalize
     }

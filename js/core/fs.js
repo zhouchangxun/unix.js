@@ -398,9 +398,9 @@ function init(_kernel) {
     myModule.moduleName = moduleName;
     myModule.version = version;
 
+    myModule.root = vfsRoot; //for debug
     myModule.File = VfsFile;
     myModule.fileHandle = VfsFileHandle;
-    myModule.root = vfsRoot; //for debug
     myModule.ls = vfsDirList;
     myModule.unlink = vfsUnlink;
     myModule.create = vfsCreate;
