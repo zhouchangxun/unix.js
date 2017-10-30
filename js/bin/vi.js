@@ -4,8 +4,7 @@
 define(['os.cmd', 'os.fs','os.kernel'],function(cmd,fs,os){
 
 var VfsFile=  fs.File ;          
-var VfsFileHandle=  fs.fileHandle;     
-var vfsRoot=  fs.root ;          
+var VfsFileHandle=  fs.fileHandle;               
 var vfsDirList=  fs.ls ;            
 var vfsUnlink=  fs.unlink;         
 var vfsCreate=  fs.create;         

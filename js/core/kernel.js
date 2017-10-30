@@ -1,4 +1,4 @@
-define(["os.common","os.fs", "os.terminal", "os.cmd", "os.shell", "os.initrd"],function(os, fs, terminal, cmd, shell){
+define(["os.common","os.fs", "os.terminal", "os.cmd", "os.shell", "os.initrd"],function(os, fs, terminal, cmd, shell, disk){
 
 //import var
 var vfsGetFile = fs.getFile ;
@@ -11,7 +11,7 @@ var shellParseLine = shell.shellParseLine; //calculate shell var.
 //global var
 var conf_defaultmail='changxunzhou'+'@'+'qq.com';
 var conf_defaulturl='https://github.com/zhouchangxun';
-var conf_rootpassskey='8069D76C';
+var conf_rootpassskey='8069D76C'; /* crypt */
 
 var os_version='unix.js 1.0.0';
 var os_greeting=' '+os_version+' - The JavaScript virtual OS for the web.';
@@ -27,10 +27,6 @@ var usrPATH=new Array();
 var usrHIST=new Array();
 var usrHistPtr=0;
 var usrGroups=new Array();
-
-//fs
-var vfsRoot=fs.root;
-var krnlInodes=0;
 
 //kernel
 var krnlPIDs=new Array(); //process list
@@ -199,7 +195,7 @@ function KrnlProcess(args) {
     this.status='';
     this.child=null;
     krnlPIDs.push(this);
-    console.log('new process:', krnlPIDs);
+    //console.log('new process:', krnlPIDs);
 }
 // os boot
 function typeResult(ret){
@@ -230,8 +226,10 @@ function krnlInit() {
     status = "booting";
         
     fs.init(this);
+    disk.init();
     cmd.init(this);
     shell.init(this);
+
     fork_init();
 
     status = "running";
@@ -536,34 +534,12 @@ function krnlFOut(fh,text,useMore) {
 }
 
 
-// crypt
-var crptSalt= '0e7aff21';
-var crptHexCode = new Array('0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F');
-var crptKeyquence= new Array();
-
-for (var i = 0; i<crptSalt.length; i+=2) {
-	crptKeyquence[crptKeyquence.length]=parseInt(crptSalt.substring(i, i+2),16);
-}
-
-function krnlCrypt(x) {
-	var enc='';
-	var k=0;
-	var last=0;
-	for (var i=0; i<x.length; i++) {
-		var s= (x.charCodeAt(i)+crptKeyquence[k++]+last) % 256;
-		last=s;
-		var h= Math.floor(s/16);
-		var l= s-(h*16);
-		enc+= crptHexCode[h]+crptHexCode[l];
-		if (k==crptKeyquence.length) k=0;
-	};
-	//console.info('passwd encrypted:',enc);
-	return enc
-}
-
 console.log('loaded kernel.js ...')
     return {
         boot: krnlInit,
+        login:krnlLogin,
+        termCtrlHandler:termCtrlHandler,
+        /* export sys call */
         krnlTTY: krnlTTY,
         krnlGetEnv: krnlGetEnv,
         krnlGetOpt:krnlGetOpt,
@@ -572,8 +548,8 @@ console.log('loaded kernel.js ...')
         krnlKill: krnlKill,
         krnlFOut: krnlFOut,
         krnlFork: krnlFork,
-        login:krnlLogin,
-        termCtrlHandler:termCtrlHandler,
+
+        /* kernel data (for debug)*/
         data:{
             krnlPIDs:krnlPIDs,
             krnlUIDs:krnlUIDs,
@@ -582,6 +558,7 @@ console.log('loaded kernel.js ...')
             krnlCurPcs:krnlCurPcs,
             krnlDevNull:krnlDevNull
         },
+        /* os modules */
         fs: fs,
         tty:terminal
     };

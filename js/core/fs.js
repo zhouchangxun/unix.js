@@ -1,17 +1,20 @@
+// unix.js file system
 define(["os.common"],function(os){
+//import var
 var kernel;
 var os_mdate = os.os_mdata;
 var usrVAR = os.usrVAR;
-var krnlInodes;
-//util
 
-// vfs file system
+//module var
+var vfsRoot;
+var vfsInodes;
+
 //file desc
 function VfsFile(k, lines) {
     this.mdate=new Date();
     this.kind=k;
     this.lines=(lines)? lines:[];
-    this.inode=krnlInodes++;
+    this.inode=vfsInodes++;
     this.owner=0;
     this.group=0;
     this.mode=0;
@@ -21,6 +24,7 @@ function _vffTouch() {
     this.mdate=new Date();
 }
 VfsFile.prototype.touch=_vffTouch;
+
 //file operation
 function VfsFileHandle(fh) {
     var f=null;
@@ -142,7 +146,8 @@ VfsFileHandle.prototype.putChunk=_vfhPutChunk;
 VfsFileHandle.prototype.getChar=_vfhGetChar;
 VfsFileHandle.prototype.ungetChar=_vfhUngetChar;
 VfsFileHandle.prototype.rewind=_vfhRewind;
-//
+
+//export fs api.
 function vfsGetPath(path,cwd) {
     while ((cwd) && (cwd.charAt(cwd.length-1)=='/')) cwd=cwd.substring(0,cwd.length-1);
     if (path) {
@@ -364,37 +369,10 @@ function vfsCheckInPath(fn,fobj) {
     };
     return false
 }
-//
-function vfsTreeSetup() {
-    var sysDirs=new Array('/sbin', '/dev', '/bin', '/home', '/var', '/usr', '/usr/bin');
 
-    usrVAR.UID=0;
-    usrVAR.GID=0;
-
-    for (var i=0; i<sysDirs.length; i++) {
-        var d=vfsCreate(sysDirs[i],'d',0775,os_mdate);
-    };
-
-    vfsCreate('/etc','d',01777,os_mdate);
-    vfsCreate('/tmp','d',01777,os_mdate);
-    vfsCreate('/root','d',0700,os_mdate);
-
-    //create device file.
-    var f;
-    f=vfsCreate('/dev/null','b',0666,os_mdate);
-
-    f=vfsCreate('/dev/console','b',0644,os_mdate);
-    f.lines=['1'];
-
-    f=vfsCreate('/dev/js','b',0755,os_mdate);
-    f.lines=['JavaScript native code'];
-
-}
-
-
-//
+//module init
 function vfsInit(_kernel) {
-    krnlInodes=100;
+    vfsInodes=100;
     vfsRoot=new VfsFile('d',{});
     vfsRoot.mdate=os_mdate;
     vfsRoot.mode=01777;
@@ -402,29 +380,27 @@ function vfsInit(_kernel) {
     vfsRoot.group=0;
     vfsRoot.icnt=2;
 
-    vfsTreeSetup();
     console.log('fs ready...');
 }
 
 function init(_kernel) {
     kernel = _kernel;
 }
-    var myModule = {}; //推荐方式
+    var myModule = {}; 
     var moduleName = "os.fs";
     var version = "1.0.0";
-    var vfsRoot;
+
     vfsInit();
-    //2,define intenal funciton area//函数定义区
+    //2,define intenal funciton area.
 
     console.log(moduleName+' loaded...')
     //3,should be return/output a object[exports/API] if other module need
-    //如有需要暴露(返回)本模块API(相关定义的变量和函数)给外部其它模块使用
     myModule.moduleName = moduleName;
     myModule.version = version;
 
     myModule.File = VfsFile;
     myModule.fileHandle = VfsFileHandle;
-    myModule.root = vfsRoot;
+    myModule.root = vfsRoot; //for debug
     myModule.ls = vfsDirList;
     myModule.unlink = vfsUnlink;
     myModule.create = vfsCreate;
@@ -439,6 +415,6 @@ function init(_kernel) {
     myModule.vfsBasename = vfsBasename;
     myModule.vfsGetSize = vfsGetSize;
     myModule.vfsGetMdate = vfsGetMdate;
-    myModule.init = init;
+    myModule.init = init; //inject kernel module ref.
     return myModule;
 });
