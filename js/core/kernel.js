@@ -169,19 +169,29 @@ function krnlAddUser(user) {
     if (hstf<=0) hstf=vfsCreate(hdir+'/.history','f',0600);
     usrHIST=hstf.lines;
     usrHistPtr=hstf.lines.length;
-    vfsForceFile(hdir+'/test.txt', 'f', [
-			"01    if this file can be opened,",
-			"02  it mean this OS's file system has worked!",
-			"03  enjoy !"
-			], 0666);
+    vfsForceFile(hdir+'/sort.js', 'f', [
+        '/* js app example. execute it with "js -f sort.js"  */      ',
+        'tty.write("this is a js sort application! %n");             ',
+        '                                                            ',                              
+        'function Greater(a,b){                                      ',                                                         
+        '    return a > b ;                                          ',                                                   
+        '}                                                           ', 
+        '                                                            ',                                                                               
+        'var arr = [1,3,24,11,8];                                    ',                       
+        'tty.write("arr before sort:%c(red) " + arr + "%c()%n");     ',                       
+        '                                                            ',                       
+        'arr.sort(Greater);                                          ',                       
+        '                                                            ',                       
+        'tty.write("arr before sort:%c(green) " + arr + "%c()%n");   '
+	], 0666);
     vfsForceFile(hdir+'/test.sh', 'f', [
-        '# start this file with "test.sh" or "sh test.sh"',
+        '# shell example. execute it with "./test.sh" or "sh test.sh"',
         'write "%+istarting test with PID=$PID%-i"',
         'write \'%+i> "date":%-i\'; date',
         'write \'%+i> "cal -w":%-i\'; cal -w',
         'write \'%+i> "cal -w | wc":%-i\'; cal -w | wc',
         'write \'%+i> "ls -l /var":%-i\'; ls -l /var',
-        'write "%+idone.%-i"'
+        'write "%n%+idone.%-i"'
     ], 0777);
 
 }
