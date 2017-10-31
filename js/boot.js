@@ -5,14 +5,11 @@
 require.config({
     //define all js file path base on this base path
     //actually this can setting same to data-main attribute in script tag
-    //定义所有JS文件的基本路径,实际这可跟script标签的data-main有相同的根路径
     baseUrl:"./js/"
 
     //define each js frame path, not need to add .js suffix name
-    //定义各个JS框架路径名,不用加后缀 .js
     ,paths:{
-        //"jquery":["http://libs.baidu.com/jquery/2.0.3/jquery", "lib/jquery/jquery-1.9.1.min"] //把对应的 jquery 这里写对即可
-        //,"underscore":"" //路径未提供，可网上搜索然后加上即可
+        //"jquery":["http://libs.baidu.com/jquery/2.0.3/jquery", "lib/jquery/jquery-1.9.1.min"],
         "os.common":"core/common"
         ,"os.fs":"core/fs"
         ,"os.initrd":"core/initrd"
@@ -20,12 +17,12 @@ require.config({
         ,"os.shell":'core/shell'
         ,"os.kernel":"core/kernel"
         ,"os.terminal":"core/terminal"
-        ,"os.bin.vi":"bin/vi"
+        ,"os.crypt":"lib/crypt"
+        ,"os.socket":"core/socket"
   
     }
 
     //include NOT AMD specification js frame code
-    //包含其它非AMD规范的JS框架
     ,shim:{
         "underscore":{
             "exports":"_"
@@ -34,16 +31,17 @@ require.config({
 
 });
 
-var os={};
+var os={}; //only export var.
+var extraAppList = ["bin/vi"];
 var tty;
 
 require(["os.kernel"],function(kernel){
-    os = kernel;
-    os.boot();
-    /* loading extra bin util. */
-    require(["os.bin.vi"]);
-    // auto open display.
-    termOpen();
+    os = kernel;   //export global os api.
+
+    termOpen();    // auto open display.
+    os.boot();     // boot os kernel.
+
+    require(extraAppList); /* loading extra bin util. */
 });
 
 function termOpen() {
@@ -55,12 +53,12 @@ function termOpen() {
                 id: 1,
                 x:100,y:50, //location
                 rows: 24, cols: 80,
-                greeting: '%+r  Open Display ...  %-r',
                 termDiv: 'termDiv',   //id of terminal div
                 crsrBlinkMode: true, //cursor blink ?
                 crsrBlockMode: false,//cursor type: block / underline.
-                handler: termHandler, // keyboard event callback.
-                exitHandler: termExitHandler,
+                handler: keyHandler, // keyboard event callback.
+                initHandler:function(){this.write('%+r  Boot System ...  %-r %n');},
+                exitHandler: null,
                 ctrlHandler: os.termCtrlHandler,
                 closeOnESC: false,
                 printTab: false
@@ -69,7 +67,7 @@ function termOpen() {
         if (tty) {
             console.log('open tty and login system...');
             tty.open();
-            os.login();          
+            //os.login(); //         
         }
     }
     else if (tty.closed) {
@@ -81,7 +79,7 @@ function termOpen() {
         tty.close();
     }
 
-    function termHandler() {
+    function keyHandler() {
         // called on <CR> or <ENTER> under line mode
         this.newLine();
         var cmd=this.lineBuffer;
@@ -91,8 +89,4 @@ function termOpen() {
         this.prompt();
     }
 
-    function termExitHandler() {
-        // optional handler called on exit
-        console.log('close terminal...')
-    }
 }

@@ -282,7 +282,7 @@ function shellExec(env) {
 function shellFork(env,cmdbin,args) {
 	var child=kernel.krnlFork(env);
 	kernel.data.krnlCurPcs=child;
-	console.log('cur process:',kernel.data.krnlCurPcs);
+	//console.log('cur process:',kernel.data.krnlCurPcs);
 	if (cmdbin == 'shellExec') {
 		child.loginShell=false;
 		var a=0;

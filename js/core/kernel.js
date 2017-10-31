@@ -1,4 +1,5 @@
-define(["os.common","os.fs", "os.terminal", "os.cmd", "os.shell", "os.initrd"],function(os, fs, terminal, cmd, shell){
+define(["os.common","os.fs", "os.terminal", "os.cmd", "os.shell", "os.initrd","os.crypt","os.socket"],
+    function(os, fs, terminal, cmd, shell, disk, crypt, socket){
 
 //import var
 var vfsGetFile = fs.getFile ;
@@ -11,7 +12,7 @@ var shellParseLine = shell.shellParseLine; //calculate shell var.
 //global var
 var conf_defaultmail='changxunzhou'+'@'+'qq.com';
 var conf_defaulturl='https://github.com/zhouchangxun';
-var conf_rootpassskey='8069D76C';
+var conf_rootpassskey='8069D76C'; /* crypt */
 
 var os_version='unix.js 1.0.0';
 var os_greeting=' '+os_version+' - The JavaScript virtual OS for the web.';
@@ -27,10 +28,6 @@ var usrPATH=new Array();
 var usrHIST=new Array();
 var usrHistPtr=0;
 var usrGroups=new Array();
-
-//fs
-var vfsRoot=fs.root;
-var krnlInodes=0;
 
 //kernel
 var krnlPIDs=new Array(); //process list
@@ -171,18 +168,18 @@ function krnlAddUser(user) {
     usrHistPtr=hstf.lines.length;
     vfsForceFile(hdir+'/sort.js', 'f', [
         '/* js app example. execute it with "js -f sort.js"  */      ',
-        'tty.write("this is a js sort application! %n");             ',
+        'os.io.write("this is a js sort application! %n");           ',
         '                                                            ',                              
         'function Greater(a,b){                                      ',                                                         
         '    return a > b ;                                          ',                                                   
         '}                                                           ', 
         '                                                            ',                                                                               
         'var arr = [1,3,24,11,8];                                    ',                       
-        'tty.write("arr before sort:%c(red) " + arr + "%c()%n");     ',                       
+        'os.io.write("arr before sort:%c(red) " + arr + "%c()%n");   ',                       
         '                                                            ',                       
         'arr.sort(Greater);                                          ',                       
         '                                                            ',                       
-        'tty.write("arr before sort:%c(green) " + arr + "%c()%n");   '
+        'os.io.write("arr before sort:%c(green) " + arr + "%c()%n"); '
 	], 0666);
     vfsForceFile(hdir+'/test.sh', 'f', [
         '# shell example. execute it with "./test.sh" or "sh test.sh"',
@@ -209,10 +206,17 @@ function KrnlProcess(args) {
     this.status='';
     this.child=null;
     krnlPIDs.push(this);
-    console.log('new process:', krnlPIDs);
+    //console.log('new process:', krnlPIDs);
 }
 // os boot
+ function setStatus(msg){
+    if(!tty) return;
+    
+    tty.write('  ['+new Date().toISOString()+'] '+msg+'... ');
+}
 function typeResult(ret){
+    if(!tty) return;
+
     tty.cursorSet(tty.r,tty.conf.cols-16)
     if(ret != 'ok' )
         tty.write('... %c(red)'+ret+'%n')
@@ -222,7 +226,7 @@ function typeResult(ret){
         
 //create init process.
 function fork_init(){
-    //tty.write('  starting up [init] ...');
+    setStatus('starting up [init] ...');
     krnlCurPcs = new KrnlProcess(['init']);
     krnlCurPcs.id = 'init';
     krnlUIDs[0] = 'root';
@@ -230,7 +234,7 @@ function fork_init(){
     krnlGIDs[0] = 'system';
     krnlGIDs[1] = 'wheel';
     krnlGIDs[2] = 'users';
-    //typeResult('ok');
+    typeResult('ok');
 }
 
       	
@@ -238,28 +242,33 @@ function krnlInit() {
     console.log('boot kernel ...');
 
     status = "booting";
-        
-    fs.init(this);
-    cmd.init(this);
-    shell.init(this);
+    setStatus("init os.fs...");
+    try{ fs.init(this); typeResult('ok');}catch(e){typeResult('failed');}
+    setStatus("init os.disk...");
+    try{ disk.init(this); typeResult('ok');}catch(e){typeResult('failed');}
+    setStatus("init os.cmd...");
+    try{ cmd.init(this); typeResult('ok');}catch(e){typeResult('failed');}
+    setStatus("init os.shell...");
+    try{ shell.init(this); typeResult('ok');}catch(e){typeResult('failed');}
+
     fork_init();
 
     status = "running";
 
-  //   if (!tty.closed) {
+    if (tty && !tty.closed) {
         
-  //       tty.cursorSet(1,2);
-  //       tty.write('version: '+os_version+'%n%n');     
+        //tty.cursorSet(1,2);
+        tty.write('  version: '+os_version+'%n%n');     
 
-  //   	tty.write('  %c(yellow)system up and stable.  :)');
-  //   	tty.write('%n%n  starting login-demon...%n%n');
+    	tty.write('  %c(yellow)system up and stable.  :)');
+    	tty.write('%n%n  starting login-demon...%n%n');
 
-		// //fork login process.
-  //       krnlLogin() ;   
+		//fork login process.
+        krnlLogin() ;   
         
-  //   }else{
-  //       alert('please open tty before.')
-  //   }
+    }else{
+        alert('please open tty before.')
+    }
 
 }
 
@@ -283,9 +292,9 @@ function krnlLoginDmn(first) {
         //begin login(redirect 'stdin' to logind process)
         tty.handler = krnlLoginDmn;
         tty.write(help+user_prompt)
-				tty._charOut(1);/*do this so that cursor can't backspace */ 
-				tty.lock=false;
-				tty.cursorOn();
+		tty._charOut(1);/*do this so that cursor can't backspace */ 
+		tty.lock=false;
+		tty.cursorOn();
         return
     }
     var cmd=this.lineBuffer;
@@ -294,11 +303,11 @@ function krnlLoginDmn(first) {
     //console.info(' entering system with user:  '+user);
     if (usrVAR.USER!=user) {
         usrHIST.length=0;
-        usrHistPtr=0
+        usrHistPtr=0;
     };
     //add new user
     krnlAddUser(user);
-    
+    //enter tty daemon.
     krnlCurPcs.id='ttyd'
     krnlCurPcs.args=['TTY'];
     krnlTTY(krnlCurPcs);
@@ -425,19 +434,20 @@ function searchCmdList(cmdName){
 
 function searchFileList(cmdName){
    var cmdList = [];
-
     //auto complement filename.
     var path = shellParseLine('$CWD')[0];
     if(path == "~")
         path=shellParseLine('$HOME')[0];
+    console.log('find file list with prefix('+cmdName+') in path:'+path);
     var ret=vfsGetFile(path);
     if(typeof ret != 'object') return [];
     for( var name in ret.lines){
-        if(name.startsWith( cmdName))
+        if(name.startsWith( cmdName)){
+            //var f = vfsGetFile(path+'/'+name);
             cmdList.push(name);
+        }
     }
-    
- 
+    console.log('file list:',cmdList);
     return cmdList;
 }
 //krnl
@@ -546,34 +556,12 @@ function krnlFOut(fh,text,useMore) {
 }
 
 
-// crypt
-var crptSalt= '0e7aff21';
-var crptHexCode = new Array('0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F');
-var crptKeyquence= new Array();
-
-for (var i = 0; i<crptSalt.length; i+=2) {
-	crptKeyquence[crptKeyquence.length]=parseInt(crptSalt.substring(i, i+2),16);
-}
-
-function krnlCrypt(x) {
-	var enc='';
-	var k=0;
-	var last=0;
-	for (var i=0; i<x.length; i++) {
-		var s= (x.charCodeAt(i)+crptKeyquence[k++]+last) % 256;
-		last=s;
-		var h= Math.floor(s/16);
-		var l= s-(h*16);
-		enc+= crptHexCode[h]+crptHexCode[l];
-		if (k==crptKeyquence.length) k=0;
-	};
-	//console.info('passwd encrypted:',enc);
-	return enc
-}
-
 console.log('loaded kernel.js ...')
     return {
         boot: krnlInit,
+        login:krnlLogin,
+        termCtrlHandler:termCtrlHandler,
+        /* export sys call */
         krnlTTY: krnlTTY,
         krnlGetEnv: krnlGetEnv,
         krnlGetOpt:krnlGetOpt,
@@ -582,8 +570,8 @@ console.log('loaded kernel.js ...')
         krnlKill: krnlKill,
         krnlFOut: krnlFOut,
         krnlFork: krnlFork,
-        login:krnlLogin,
-        termCtrlHandler:termCtrlHandler,
+
+        /* kernel data (for debug)*/
         data:{
             krnlPIDs:krnlPIDs,
             krnlUIDs:krnlUIDs,
@@ -592,8 +580,11 @@ console.log('loaded kernel.js ...')
             krnlCurPcs:krnlCurPcs,
             krnlDevNull:krnlDevNull
         },
+        /* os modules */
         fs: fs,
-        tty:terminal
+        tty:terminal,
+        crypt:crypt,
+        socket:socket
     };
 });
 //eof

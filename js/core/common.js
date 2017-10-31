@@ -7,7 +7,6 @@ define([],function(){  //注意模块的写法
     //2,define intenal funciton area//函数定义区
     var usrVAR = {};
     var usrALIAS = {};
-    var cmdList = {};
 
     var os_mdate=new Date(2016,11,11,12,0,0);
 
@@ -80,13 +79,19 @@ function txtStringReplace(s1,s2,t) {
     //如有需要暴露(返回)本模块API(相关定义的变量和函数)给外部其它模块使用
     myModule.moduleName = moduleName;
     myModule.version = version;
+
     myModule.usrVAR = usrVAR;
-    myModule.os_mdate = os_mdate;
     myModule.usrALIAS = usrALIAS;
-    myModule.cmdList = cmdList;
+    myModule.os_mdate = os_mdate;
+
     myModule.txt={
-        txtNormalize:txtNormalize
+        stripStyles:txtStripStyles,
+        normalize:txtNormalize,
+        fillLeft:txtFillLeft,
+        center:txtCenter,
+        stringReplace:txtStringReplace
     }
+
     return myModule;
 
     /*

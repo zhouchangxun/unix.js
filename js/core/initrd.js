@@ -1,58 +1,56 @@
-// JS/UIX .rc file
+// unix.js init ram disk.
 define(["os.common", "os.fs"],function(os, fs){
-
-//import method
+//import deps
 var vfsForceFile = fs.vfsForceFile;
+var vfsCreate = fs.create;
+var usrVAR = os.usrVAR;
+var os_mdate = os.os_mdate;
 
-vfsForceFile('/etc/profile', 'f', [
-'#!/bin/sh',
-'alias -s split splitmode on',
-'alias -s unsplit splitmode off',
-'set -s PATH = \'/bin /sbin /usr/bin ~\'',
-'set -s PS = \'[${USER}@${HOST}:${CWD}]\'',
-'alias -s ll "ls -l"',
-//'stty -blink',
-'write "                           %+r     Terminal ready.     %-r"',
-'echo " $VERSION - The JavaScript virtual OS for the web."',
-'echo " Type \\"info\\" for site information. Type \\"help\\" for available commands."',
-'echo " ------------------------------------------------------------------------------"'
-], 0755);
-	
-vfsForceFile('/var/lx', 'f', [
-'#!/bin/sh',
-'# command-test: copy this to /bin/lx (using cp -p)',
-'echo  "Content of $1:"',
-'ls -C $1',
-'echo `ls -l $1 | wc -l` " file(s)."'
-], 0777);
+function initRamDisk() {
+	usrVAR.UID=0;
+    usrVAR.GID=0;
 
-vfsForceFile('/etc/news', 'f', [
-'%+r JS/UIX News %-r',
-'-------------------------------------------------------------------------------',
-'Oops: JS/UIX was slashdotted (June 16 2005)!',
-'Thanks for mails and comments!',
-' ',
-'Recent changes:',
-' * fixed a new dead keys issue with mac OS (backticks, tilde). [v.0.48]',
-' * fixed the key-handler for Safari (fired BACKSPACE twice). [v.0.46]',
-' * added ecxeption handling for command "js" for supporting browsers. [v.0.46]',
-' * added "/usr/bin/invaders" to demo interactive run time. [v0.45]',
-'   yes, it\'s space invaders for JS/UIX!',
-' * added a new "smart console" feature for smart scolling. [v.044]',
-'   this should avoid most scrolling delays by rendering only visble changes.',
-'   the smart console option is activated by default and may be switched on/off',
-'   using "stty [-]smart".',
-' * fixed a bug in command "which" [v0.43]',
-' * added news-feature (displays this file) [v0.42]',
-' * fixed "wc" command to work like the real thing. [v0.42]',
-' ',
-'Any major changes to the system will be posted on this page.',
-'Stay tuned to be informed.',
-'-------------------------------------------------------------------------------'
-], 0644);
+	var permission = 0775;
 
+	// create sys dir.
+    var sysDirs=new Array('/sbin', '/dev', '/bin', '/home', '/var', '/usr', '/usr/bin');
+    for (var i=0; i<sysDirs.length; i++) {
+        var d=vfsCreate(sysDirs[i], 'd', permission, os_mdate);
+    };
+    permission = 01777;
+    vfsCreate('/etc', 'd', permission, os_mdate);
+    vfsCreate('/tmp', 'd', permission, os_mdate);
+
+    vfsCreate('/root', 'd', 0700, os_mdate);
+
+    //create device file.
+    var f;
+    f=vfsCreate('/dev/null','b',0666,os_mdate);
+    f=vfsCreate('/dev/console','b',0644,os_mdate);
+    f.lines=['1'];
+
+    f=vfsCreate('/dev/js','b',0755,os_mdate);
+    f.lines=['JavaScript native code'];
+
+    //user profile script (called when user login system.)
+    vfsForceFile('/etc/profile', 'f', [
+		'#!/bin/sh',
+		'set -s PATH = \'/bin /sbin /usr/bin ~\'',
+		'set -s PS = \'[${USER}@${HOST}:${CWD}]\'',
+		'alias -s split splitmode on',
+		'alias -s unsplit splitmode off',
+		'alias -s ll "ls -l"',
+		'alias -s la "ls -a"',
+		//'stty -blink',
+		'write "                           %+r     Terminal ready.     %-r"',
+		'echo " $VERSION - The JavaScript virtual OS for the web."',
+		'echo " Type \\"info\\" for site information. Type \\"help\\" for available commands."',
+		'echo " ------------------------------------------------------------------------------"'
+	], 0755);
+
+}
 
 console.log('loaded initrd.js ...');
-
+return {init: initRamDisk};
 });
 // eof

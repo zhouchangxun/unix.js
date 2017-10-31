@@ -1,8 +1,7 @@
 
-define(["os.common", "os.fs"],function(os, fs){
+define(["os.common", "os.fs"],function(common, fs){
 
 //import method
-var cmdList= os.cmdList
 var VfsFile=  fs.File ;          
 var VfsFileHandle=  fs.fileHandle;     
 var vfsRoot=  fs.root ;          
@@ -19,14 +18,14 @@ var vfsGetPath =fs.vfsGetPath;
 var vfsBasename = fs.vfsBasename;
 var vfsGetSize = fs.vfsGetSize;
 var vfsGetMdate = fs.vfsGetMdate;
+var vfsCheckInPath = fs.vfsCheckInPath;
 
-var usrALIAS = os.usrALIAS;
-var usrVAR = os.usrVAR;
+var usrALIAS = common.usrALIAS;
+var usrVAR = common.usrVAR;
 var kernel = {};
 var krnlFOut;
+
 // module var
-var cmdFileStack=new Array();
-//
 
 function txtStripStyles(text) {
     // strip markup from text
@@ -445,29 +444,32 @@ function commandJs(env) {
 			for (var ari=a+1; ari<env.args.length; ari++) {
 				if (env.args[ari]!='') val+=env.args[ari];
 			};
-			if (opt.n) {
+			if (opt.n) {//Number
 				eval(vstring+'='+val);
 				krnlFOut(env.stderr,'js-var self.'+vstring+' set to "'+val+'" (plain value).')
 			}
-			else {
+			else {//String
 				for (var ofs=val.indexOf("'"); val>=0; ofs=val.indexOf("'",ofs+2)) val=val.substring(0,ofs)+"\\'"+val.substring(ofs+1);
 				eval(vstring+'="'+val+'"');
 				krnlFOut(env.stderr,'js-var self.'+vstring+' set to \''+val+'\' (string value).')
 			}
 		}
-		else {
-			krnlFOut(env.stdout,'usage: '+env.args[0]+' -e|l[t]|s|t <expression> -- set: <expression> ::= <varname> <value>');
-		};
-		ok=true
+		else 
+			ok=false;
 	}
 	else if (opt.e) {
 		for (var ari=a+1; ari<env.args.length; ari++) {
 			if (env.args[ari]!='') vn+=env.args[ari];
 		};
-		krnlFOut(env.stdout,'evaluating "'+vn+'" in js ...');
-		var result = (jsuix_hasExceptions)? eval('try{eval('+vn+')} catch(e){e}') : eval(vn);
-		//var result=eval(vn);
-		krnlFOut(env.stdout,"returned: "+result);
+		krnlFOut(env.stdout,'evaluating "'+vn+'" in js ...%n');
+		var result;
+		try{
+			result=eval(vn);
+			krnlFOut(env.stdout,"returned: "+result);
+		}catch(e){
+			krnlFOut(env.stdout,"error: "+e);
+		}
+
 		ok=true
 	}
 	else if (opt.f) {
@@ -478,13 +480,18 @@ function commandJs(env) {
 			return -1;
 		}
 		var jsCode = f.lines.join(" ");
-		//krnlFOut(env.stdout,'evaluating "'+fileName+'" ...');
 		
-		var result = (jsuix_hasExceptions)? eval('try{eval(\''+jsCode+'\')} catch(e){e}') : eval(jsCode);
-		//var result=eval(vn);
-		//krnlFOut(env.stdout,"returned: "+result);
+		var result;
+		try{
+			result=eval(jsCode);
+			krnlFOut(env.stdout,"program exit with code: "+result);
+		}catch(e){
+			krnlFOut(env.stdout,"error: "+e);
+		}
+
 		ok=true
 	};
+
 	if (!ok) {
 			krnlFOut(env.stdout,'usage: '+env.args[0]+' -e|l[t]|s|t <expression> or -f <filename>');
 	}
@@ -513,6 +520,100 @@ function commandMkdir(env) {
 		}
 	}
 }
+function commandClear(env) {
+	tty.cls();
+}
+function commandSplitScreen(env) {
+	var args=env.args;
+	var split=false;
+	if (args.length==2) {
+		if (args[1]=='on') {
+			split=true;
+		}
+		else if (args[1]!='off') {
+			krnlFOut(env.stderr,'usage: '+args[0]+' on|off  - illegal argument');
+			return
+		}
+	}
+	else {
+		krnlFOut(env.stderr,'usage: '+args[0]+' on|off');
+		return
+	};
+	tty.clear();
+	if (split) {
+		tty.type('split mode on',1); tty.newLine();
+		tty.typeAt(tty.maxLines-2,0,'--------------------------------------------------------------------------------');
+		tty.typeAt(tty.maxLines-1,0,'type "splitmode off" or "clear" to return to normal mode.');
+		tty.maxLines-=2;//key point.
+	}
+	else  {
+		tty.maxLines+=2;//key point.
+		krnlFOut(env.stdout,'split mode off',1)
+	}
+}
+function commandInfo(env) {
+	tty.clear();
+	krnlFOut(env.stdout,[
+		'%+r About me %-r',
+		'              * web design & development',
+		'              * clientside & serverside programming',
+		'              * C/C++, HTML, JavaScript, Java, Python',
+		'              * cloud compute & virtualization%n',
+		'              e-mail: changxunzhou@qq.com',		
+		'              github: https://github.com/zhouchangxun/%n',
+		//'Type "mail" for email, "web" for website, "help" for available commands.',
+		],1);
+}
+function commandRmdir(env) {
+	var dirs=new Array();
+	var opt=krnlGetOpts(env.args,1);
+	if (krnlTestOpts(opt,'i')<0) {
+		krnlFOut(env.stderr,'illegal option.');
+		return
+	};
+	var verbous=(opt.i)? false:true;
+	if (env.stdin) {
+		ldscrp=env.stdin.readLine();
+		while (ldscrp[0]>=0) {
+			dirs[dirs.length]=vfsGetPath(ldscrp[1],env.cwd);
+			ldscrp=env.stdin.readLine();
+		}
+	};
+	for (var a=1+opt.length; a<env.args.length; a++) {
+		dirs[dirs.length]=vfsGetPath(env.args[a],env.cwd);
+	};
+	for (var i=0; i<dirs.length; i++) {
+		if (dirs[i]!='') {
+			var dn=dirs[i];
+			var d=vfsOpen(dn);
+			if (d<0) {
+				if (verbous) krnlFOut(env.stderr,dn+': path permission denied.');
+				continue
+			}
+			else if (d==0) {
+				if (verbous) krnlFOut(env.stderr,dn+': directory not found.');
+				continue
+			}
+			else if (d.kind!='d') {
+				if (verbous) krnlFOut(env.stderr,dn+': is not a directory.');
+				continue
+			}
+			else if (vfsGetSize(d)) {
+				if (verbous) krnlFOut(env.stderr,dn+': directory not empty.');
+				continue
+			};
+			if (vfsCheckInPath(env.cwd,d)) {
+				if (verbous) krnlFOut(env.stderr,dn+'can\'t delete directory in current path.');
+				continue
+			};
+			var st=vfsUnlink(dn);
+			if (!st) {
+				if (verbous) krnlFOut(env.stderr,dn+': permission denied.');
+				continue
+			}
+		}
+	}
+}
 function cmdRegistrate(path, cmdCallback){
 	var cmdFile = vfsForceFile(path, 'b', ['#!/dev/js'], 0755, os.os_mdate);
 	cmdFile.callback = cmdCallback;
@@ -521,6 +622,8 @@ function cmdRegistrate(path, cmdCallback){
 function commandInit(_kernel) {
 	kernel = _kernel;
 	krnlFOut = kernel.krnlFOut;
+	krnlTestOpts = kernel.krnlTestOpts;
+	krnlGetOpts = kernel.krnlGetOpts;
 	cmdRegistrate('/bin/ls', commandLs);
 	cmdRegistrate('/bin/cat', commandCat);
 	cmdRegistrate('/bin/echo', commandEcho);
@@ -529,6 +632,10 @@ function commandInit(_kernel) {
 	cmdRegistrate('/bin/ps', commandPs);
 	cmdRegistrate('/bin/js', commandJs);
 	cmdRegistrate('/bin/mkdir', commandMkdir);
+	cmdRegistrate('/bin/clear', commandClear);
+	cmdRegistrate('/bin/splitmode', commandSplitScreen);
+	cmdRegistrate('/bin/info', commandInfo);
+	cmdRegistrate('/bin/rmdir', commandRmdir);
 }
 
 

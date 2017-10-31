@@ -495,14 +495,13 @@ function commandInfo(env) {
 	krnlFOut(env.stdout,[
 		'%+r Site Information %-r',
 		' %n',
-		'                             http://sixloop.cf%n',
 		'              * web design & development',
 		'              * clientside & serverside programming',
 		'              * C/C++, HTML, JavaScript, Java, Python',
 		'              * cloud compute & virtualization%n',
 		'              e-mail: changxunzhou@qq.com',		
 		'              github: https://github.com/zhouchangxun/%n',
-		'Type "mail" for email, "web" for website, "help" for available commands.',
+		//'Type "mail" for email, "web" for website, "help" for available commands.',
 		],1);
 }
 
