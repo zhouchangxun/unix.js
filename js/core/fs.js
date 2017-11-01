@@ -325,7 +325,7 @@ function vfsGetSize(f) {
 
 function vfsGetMdate(f) {
     var fd=f.mdate;
-    return (fd)? fd.getFullYear()+'/'+os.txt.txtNormalize(fd.getMonth()+1,2)+'/'+os.txt.txtNormalize(fd.getDate(),2)+' '+os.txt.txtNormalize(fd.getHours(),2)+':'+os.txt.txtNormalize(fd.getMinutes(),2)+':'+os.txt.txtNormalize(fd.getSeconds(),2) : '???';
+    return (fd)? fd.getFullYear()+'/'+os.txt.normalize(fd.getMonth()+1,2)+'/'+os.txt.normalize(fd.getDate(),2)+' '+os.txt.normalize(fd.getHours(),2)+':'+os.txt.normalize(fd.getMinutes(),2)+':'+os.txt.normalize(fd.getSeconds(),2) : '???';
 }
 
 function vfsDirList(d) {

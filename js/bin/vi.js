@@ -77,9 +77,7 @@ function commandVi(env) {
 		env.bufheight[0]=1;
 	};
 	tty.clear();
-	env.bl=tty.conf.rows-1;
-	// term[env.bl]=tty.getRowArray(tty.conf.cols,0);
-	// termStyle[env.bl]=tty.getRowArray(tty.conf.cols,0);
+	env.bl=tty.conf.rows-1; /* bottom line */
 	env.top=0;
 	env.lc=0;
 	viRefresh(env,true);
@@ -205,12 +203,15 @@ function viSetCursorPos(env) {
 	var t_r=0,t_c=0;
 	var l=env.top;
 
+	//calc real line num.
 	for (l=env.top; l<env.curline; l++)
 		t_r += env.bufheight[l];
-	env.lr = t_r;
+	env.lr = t_r;	
+
 	var ll = env.buffer[env.curline].length;
+
 	if (ll>0) {
-		env.col = Math.min(ll-1,env.lc);
+		env.col = Math.min(ll,env.lc);
 		if (env.col > tty.conf.cols-1) 
 			t_r += Math.floor(env.col/(tty.conf.cols-1));
 		t_c += env.col%(tty.conf.cols)
@@ -637,9 +638,9 @@ function viInsert(env,ch) {
 		tty.cursorSet(env.lr,0);
 		viType(env.buffer[env.curline]);
 		env.bufheight[env.curline]=1;
+		env.lc=1;
 		viSetCursorPos(env);
 		env.append=true;
-		//env.append=false;
 	}
 	else {
 		if (env.append) n++;
@@ -654,7 +655,8 @@ function viInsert(env,ch) {
 		viType(env.buffer[env.curline]);
 		var lh2=env.bufheight[env.curline]=viGetLineHeight(env,env.curline);
 		if (env.append) env.append=le;
-		env.lc=(env.append)? n:n+1;
+		//env.lc=(env.append)? n:n+1;
+		env.lc = n+1;
 		viSetCursorPos(env);
 		if (lh1!=lh2) viRefresh(env);
 	};
@@ -733,7 +735,7 @@ function viOpenLine(env,ofs) {
 	viRefresh(env);
 	viSetCursorPos(env)
 }
-
+/* when the line length > tty.conf.cols, this line may show in multi line.*/
 function viGetLineHeight(env,l) {
 	return Math.max(1, 1+Math.floor((env.buffer[l].length-1)/tty.conf.cols))
 }
@@ -844,7 +846,7 @@ function viNavCharHandler(env,ch) {
 		if (ch==65) { viMoveLineEnd(env); tty.cursorOff() }
 		else if (ch==73) { viMoveLineStart(env,1); tty.cursorOff() };
 		env.append=((ch==97)  || (ch==65));//a || A -> append mode.
-		//if(env.append){tty.cursorRight();}
+		if(env.append){tty.cursorRight();}
 		if ((ch!=111) && (ch!=79)) viBackup(env,0);
 		tty.cursorOn();
 	}
