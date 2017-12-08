@@ -22,6 +22,17 @@
 		<A href="javascript:termOpen()" class="termopen" onfocus="if(this.blur)this.blur();">&lt;on/off&gt&nbsp;</A>
 	</p>
 	<div id="termDiv" class="center_tty" onclick=""> </div>
+	<div id="bg-div" style=""></div>
+	<script type="text/javascript">
+		window.onload = function() {
+		  var bgdiv = document.getElementById('bg-div');
+    	  bgdiv.style.width = document.body.clientWidth;
+    	  bgdiv.style.height = document.body.clientHeight;
+		  CanvasParticle({div:"bg-div"});
+		}
+	</script>
+	<script type="text/javascript" src="js/vendor/canvas-particle.js"></script>
+
 </body>
 <script data-main="js/boot.js" src="js/vendor/require.js"></script>
 </html>

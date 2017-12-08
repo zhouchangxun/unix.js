@@ -11,6 +11,7 @@ require.config({
     ,paths:{
         //"jquery":["http://libs.baidu.com/jquery/2.0.3/jquery", "lib/jquery/jquery-1.9.1.min"],
         "os.common":"core/common"
+        ,"key":"vendor/jwerty"
         ,"os.fs":"core/fs"
         ,"os.initrd":"core/initrd"
         ,"os.cmd":"core/cmd"
